@@ -1,0 +1,72 @@
+# How the downloadable build is packaged.
+#
+# Locale stripping is the size lever. Electron ships Chromium locale packs for
+# every language; keeping only en-US and Indonesian lands the Windows zip
+# around 80 MB (under 90 MB). Compression stays `normal`: `maximum` is solid
+# LZMA and looks like a packed executable to endpoint protection.
+appId: io.github.samuelhtampubolon.tessercadina
+productName: TesserCADIna
+copyright: Copyright (c) 2026 Samuel Tampubolon. MIT licensed.
+
+electronLanguages:
+  - en-US
+  - id
+
+directories:
+  output: ../dist-desktop
+  buildResources: build
+
+files:
+  - main.cjs
+  - protocol.cjs
+  - package.json
+  - from: ..
+    to: .
+    filter:
+      - index.html
+      - sw.js
+      - src/**/*
+      - styles/**/*
+      - vendor/**/*
+      - assets/**/*
+      - LICENSE
+      - NOTICE
+      - ATTRIBUTION.md
+      - '!**/*.map'
+      - '!**/Credit_*'
+      - '!**/*.ipynb'
+
+asar: true
+compression: normal
+
+win:
+  target:
+    - target: zip
+      arch: [x64]
+    - target: nsis
+      arch: [x64]
+  signAndEditExecutable: true
+  artifactName: TesserCADIna-${version}-windows-${arch}.${ext}
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  artifactName: TesserCADIna-${version}-setup.${ext}
+  createDesktopShortcut: false
+  createStartMenuShortcut: true
+  runAfterFinish: false
+
+linux:
+  target: [AppImage, tar.gz]
+  category: Graphics
+  synopsis: Studio CAD parametrik yang berjalan offline
+  syncDesktopName: true
+  artifactName: TesserCADIna-${version}-linux-${arch}.${ext}
+
+mac:
+  target: [dmg, zip]
+  category: public.app-category.graphics-design
+  artifactName: TesserCADIna-${version}-mac-${arch}.${ext}
+  hardenedRuntime: true
+  gatekeeperAssess: false

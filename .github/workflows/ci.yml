@@ -1,0 +1,42 @@
+name: Tests
+
+on:
+  push:
+    branches-ignore: [main]
+  pull_request:
+
+concurrency:
+  group: tests-${{ github.event.pull_request.head.ref || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  headless:
+    name: Headless suites
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm test
+
+  browser:
+    name: Browser suites
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-audit --no-fund
+      - name: Install Chromium
+        run: npx playwright-core install --with-deps chromium
+      - run: npm run test:browser
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: browser-failure-artifacts
+          path: test-artifacts/
+          if-no-files-found: ignore
