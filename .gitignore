@@ -1,8 +1,5 @@
 node_modules/
-.DS_Store
-*.log
-
-# Desktop build output and the shell's own dependencies.
-dist-desktop/
-desktop/node_modules/
-test-artifacts/
+.project_id
+.github_repo
+.env
+.env.*
