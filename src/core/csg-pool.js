@@ -34,11 +34,15 @@ class Pool {
     this.queue = [];
     this.jobs = new Map();
     this.seq = 0;
-    this.available = null;
+    this.available = null;      // null = not yet probed
     this.reason = '';
     this.stats = { dispatched: 0, completed: 0, failed: 0, fellBack: 0, peakParallel: 0, busy: 0 };
   }
 
+  /**
+   * Try to start the pool. Called once, lazily, so a document with no
+   * booleans never pays for workers it does not use.
+   */
   start() {
     if (this.available !== null) return this.available;
     if (typeof Worker === 'undefined') {
@@ -51,6 +55,8 @@ class Pool {
       for (let i = 0; i < n; i++) {
         const w = new Worker(url, { type: 'module' });
         w.onmessage = (e) => this._finish(w, e.data);
+        // A worker that fails to load never answers, so its jobs would hang.
+        // Treat any error as the pool being unusable and fall back.
         w.onerror = (err) => { this._collapse(err?.message || 'a worker failed to load'); };
         this.workers.push(w);
         this.idle.push(w);
@@ -65,6 +71,7 @@ class Pool {
     }
   }
 
+  /** Give up on workers entirely and reject outstanding jobs so they retry. */
   _collapse(reason) {
     this.available = false;
     this.reason = reason;
@@ -103,6 +110,12 @@ class Pool {
     }
   }
 
+  /**
+   * Run one boolean off-thread.
+   * Rejects with a WORKER_UNAVAILABLE error when the pool cannot take it, so
+   * the caller knows to use the synchronous kernel instead of showing a
+   * failure the user cannot act on.
+   */
   run(op, operands) {
     if (!this.start()) {
       this.stats.fellBack++;
@@ -116,6 +129,7 @@ class Pool {
 
   get size() { return this.workers.length; }
 
+  /** For the status panel: what the pool is and what it has done. */
   report() {
     return {
       available: this.available === true,

@@ -1,6 +1,6 @@
 /**
- * Records the viewport to a WebM video using the browser's own encoder.
- * No server, no ffmpeg.
+ * Records the viewport to a WebM video using the browser's own encoder —
+ * MediaRecorder over canvas.captureStream(). No server, no ffmpeg.
  */
 import { bus, T } from '../core/bus.js';
 import { download } from '../io/io.js';
@@ -24,6 +24,10 @@ function pickMime() {
   return '';
 }
 
+/**
+ * Play the timeline from 0 to `duration` while capturing each frame.
+ * Resolves once the file has been handed to the browser.
+ */
 export function recordTimeline(viewport, sim, { fps = 30, onProgress = null } = {}) {
   return new Promise((resolve, reject) => {
     if (!recordingSupported()) { reject(new Error('This browser cannot record canvas video')); return; }
@@ -55,7 +59,7 @@ export function recordTimeline(viewport, sim, { fps = 30, onProgress = null } = 
     let frame = 0;
 
     rec.start();
-    bus.emit(T.STATUS, 'Recording\u2026');
+    bus.emit(T.STATUS, 'Recording…');
 
     const step = () => {
       if (frame > total) {

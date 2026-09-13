@@ -1,5 +1,8 @@
 /**
- * Creates a tiny node_modules/three shim that points at the vendored build.
+ * Creates a tiny node_modules/three shim that points at the vendored build, so
+ * the source modules (which import the bare specifier "three", resolved in the
+ * browser by the import map in index.html) also resolve under plain Node.
+ *
  * Run this once before `npm test`. Nothing is downloaded.
  */
 import { mkdirSync, copyFileSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
@@ -17,6 +20,8 @@ if (!existsSync(src)) {
 mkdirSync(dest, { recursive: true });
 copyFileSync(src, join(dest, 'three.module.js'));
 
+// The browser resolves "three/addons/X.js" through the import map in
+// index.html; mirror that here so Node can import the application modules too.
 const addons = join(dest, 'addons');
 mkdirSync(addons, { recursive: true });
 const vendor = join(root, 'vendor');

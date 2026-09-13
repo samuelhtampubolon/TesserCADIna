@@ -1,18 +1,52 @@
+/**
+ * The boolean kernel: constructive solid geometry over BSP trees.
+ *
+ * ATTRIBUTION. The method is the classic one: Thibault and Naylor, "Set
+ * operations on polyhedra using binary space partitioning trees", SIGGRAPH
+ * 1987. The specific decomposition used below, and in particular the
+ * numerically careful `splitPolygon` that classifies a polygon against a plane
+ * and emits the coplanar cases separately, follows Evan Wallace's csg.js
+ * (2011), which is MIT licensed. See ATTRIBUTION.md for the notice. The
+ * arithmetic here is rewritten over flat typed arrays rather than a per-vertex
+ * object graph, and the tree, the operations and the tolerance handling are
+ * this project's own, but the shape of the algorithm is his and the credit
+ * belongs there rather than in a footnote.
+ *
+ * This file holds no reference to three.js, which is the reason it exists
+ * separately from csg.js in this same directory. A module worker does not
+ * receive the page's import map, so a file that says
+ * `import * as THREE from 'three'` cannot be loaded in one, while a file whose
+ * only imports are relative can. Keeping the maths here and the adapter next
+ * door is what lets the same code run on the main thread and in a worker with
+ * no second implementation to keep in step.
+ *
+ * Triangles in, triangles out: `{ position: Float32Array, normal: Float32Array }`
+ * with three vertices per triangle and no index. Those arrays are transferable,
+ * so handing work to a worker copies nothing.
+ */
+
 const EPS = 1e-5;
+
+
+/* ------------------------------------------------------------------ plane */
 
 function planeFromPoints(a, b, c) {
   const nx = (b[1] - a[1]) * (c[2] - a[2]) - (b[2] - a[2]) * (c[1] - a[1]);
   const ny = (b[2] - a[2]) * (c[0] - a[0]) - (b[0] - a[0]) * (c[2] - a[2]);
   const nz = (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
   const len = Math.hypot(nx, ny, nz);
-  if (len < 1e-12) return null;
+  if (len < 1e-12) return null;             // degenerate triangle
   const n = [nx / len, ny / len, nz / len];
   return { n, w: n[0] * a[0] + n[1] * a[1] + n[2] * a[2] };
 }
 
+/* ---------------------------------------------------------------- polygon */
+/** A polygon is { v: [vertex...], plane }. A vertex is [x,y,z, nx,ny,nz]. */
+
 function lerpVert(a, b, t) {
   const out = new Array(6);
   for (let i = 0; i < 6; i++) out[i] = a[i] + (b[i] - a[i]) * t;
+  // renormalise the interpolated normal
   const l = Math.hypot(out[3], out[4], out[5]);
   if (l > 1e-9) { out[3] /= l; out[4] /= l; out[5] /= l; }
   return out;
@@ -27,6 +61,12 @@ function flipPoly(p) {
 
 const COPLANAR = 0, FRONT = 1, BACK = 2, SPANNING = 3;
 
+/**
+ * Split `poly` by `plane`, appending the pieces to the four output lists.
+ * This follows csg.js (Evan Wallace, MIT); see the attribution at the top of
+ * this file. The care is in the coplanar cases: a polygon lying in the plane
+ * has to go to the side its own normal faces, or the tree loses the surface.
+ */
 function splitPolygon(plane, poly, coFront, coBack, front, back) {
   const { n, w } = plane;
   let type = 0;
@@ -37,6 +77,7 @@ function splitPolygon(plane, poly, coFront, coBack, front, back) {
     type |= ty;
     types.push(ty);
   }
+
   switch (type) {
     case COPLANAR: {
       const dot = n[0] * poly.plane.n[0] + n[1] * poly.plane.n[1] + n[2] * poly.plane.n[2];
@@ -69,12 +110,19 @@ function splitPolygon(plane, poly, coFront, coBack, front, back) {
   }
 }
 
+/* -------------------------------------------------------------- BSP node */
+
 class Node {
   constructor(polys) {
-    this.plane = null; this.front = null; this.back = null; this.polys = [];
+    this.plane = null;
+    this.front = null;
+    this.back = null;
+    this.polys = [];
     if (polys && polys.length) this.build(polys);
   }
+
   invert() {
+    // iterative to keep deep trees off the JS call stack
     const stack = [this];
     while (stack.length) {
       const n = stack.pop();
@@ -85,6 +133,8 @@ class Node {
       if (n.back) stack.push(n.back);
     }
   }
+
+  /** Remove the parts of `polys` that fall inside this solid. */
   clipPolygons(polys) {
     if (!this.plane) return polys.slice();
     let front = [], back = [];
@@ -93,6 +143,7 @@ class Node {
     back = this.back ? this.back.clipPolygons(back) : [];
     return front.concat(back);
   }
+
   clipTo(other) {
     const stack = [this];
     while (stack.length) {
@@ -102,6 +153,7 @@ class Node {
       if (n.back) stack.push(n.back);
     }
   }
+
   allPolygons() {
     const out = [];
     const stack = [this];
@@ -113,7 +165,9 @@ class Node {
     }
     return out;
   }
+
   build(polys) {
+    // Iterative build: a recursive one blows the stack on large meshes.
     const work = [[this, polys]];
     while (work.length) {
       const [node, list] = work.pop();
@@ -127,11 +181,25 @@ class Node {
   }
 }
 
+
+/* ------------------------------------------- triangles <-> polygons */
+
+/**
+ * Build polygons from flat triangle arrays, optionally transformed.
+ *
+ * `matrix` is a plain 16-number column-major array, the same layout
+ * THREE.Matrix4 uses, so a caller can pass `m.elements` straight through and a
+ * worker can receive it without knowing what a Matrix4 is.
+ */
 export function trianglesToPolygons(position, normal, matrix = null) {
   const polys = [];
   const n = (position.length / 9) | 0;
+
+  // Normals transform by the inverse transpose of the upper 3x3. Computing it
+  // here keeps the worker free of any matrix library.
   let nm = null;
   if (matrix) nm = normalMatrix3(matrix);
+
   for (let t = 0; t < n; t++) {
     const tri = [];
     for (let k = 0; k < 3; k++) {
@@ -159,6 +227,7 @@ export function trianglesToPolygons(position, normal, matrix = null) {
   return polys;
 }
 
+/** Inverse transpose of the upper 3x3, column-major, for normals. */
 function normalMatrix3(m) {
   const a = m[0], b = m[1], c = m[2];
   const d = m[4], e = m[5], f = m[6];
@@ -167,6 +236,7 @@ function normalMatrix3(m) {
   const det = a * A + b * B + c * C;
   if (!det) return [1, 0, 0, 0, 1, 0, 0, 0, 1];
   const id = 1 / det;
+  // inverse, then transpose: the transpose is applied by the index order below.
   return [
     A * id, B * id, C * id,
     (c * h - b * i) * id, (a * i - c * g) * id, (b * g - a * h) * id,
@@ -174,6 +244,7 @@ function normalMatrix3(m) {
   ];
 }
 
+/** Fan-triangulate polygons back into flat arrays. */
 export function polygonsToTriangles(polys) {
   let triCount = 0;
   for (const p of polys) triCount += Math.max(0, p.v.length - 2);
@@ -192,6 +263,7 @@ export function polygonsToTriangles(polys) {
   }
   return { position, normal };
 }
+/* ----------------------------------------------------------- operations */
 
 function opUnion(a, b) {
   const A = new Node(a), B = new Node(b);
@@ -200,6 +272,7 @@ function opUnion(a, b) {
   A.build(B.allPolygons());
   return A.allPolygons();
 }
+
 function opSubtract(a, b) {
   const A = new Node(a), B = new Node(b);
   A.invert();
@@ -209,6 +282,7 @@ function opSubtract(a, b) {
   A.invert();
   return A.allPolygons();
 }
+
 function opIntersect(a, b) {
   const A = new Node(a), B = new Node(b);
   A.invert();
@@ -218,17 +292,35 @@ function opIntersect(a, b) {
   A.invert();
   return A.allPolygons();
 }
+
 const OPS = { union: opUnion, subtract: opSubtract, intersect: opIntersect };
+
+
+
+/** Soft ceiling: booleans above this get slow enough to feel broken. */
 export const TRI_BUDGET = 90000;
+
 export const OPS_AVAILABLE = Object.keys(OPS);
+
+/**
+ * Fold a boolean over a list of operands given as flat arrays.
+ * This is the function the worker calls, and the one the main thread falls
+ * back to when workers are unavailable. Identical maths either way.
+ *
+ * @param {string} op  union | subtract | intersect
+ * @param {Array<{position: Float32Array, normal: Float32Array, matrix: number[]|null}>} operands
+ * @returns {{position: Float32Array, normal: Float32Array}}
+ */
 export function booleanTriangles(op, operands) {
   const fn = OPS[op] || opUnion;
   if (!operands.length) return { position: new Float32Array(0), normal: new Float32Array(0) };
+
   let total = 0;
   for (const o of operands) total += o.position.length / 9;
   if (total > TRI_BUDGET) {
     throw new Error(`Boolean skipped: ${Math.round(total / 1000)}k triangles exceeds the ${TRI_BUDGET / 1000}k budget. Reduce segment counts on the inputs.`);
   }
+
   let acc = trianglesToPolygons(operands[0].position, operands[0].normal, operands[0].matrix);
   for (let i = 1; i < operands.length; i++) {
     const next = trianglesToPolygons(operands[i].position, operands[i].normal, operands[i].matrix);

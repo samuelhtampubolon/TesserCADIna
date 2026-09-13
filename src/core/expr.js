@@ -1,7 +1,17 @@
 /**
- * Deliberately NOT using eval()/Function(): the parser only ever produces numbers,
- * so a malicious project file cannot execute code.
+ * A small, dependency-free arithmetic expression evaluator.
+ *
+ * Every numeric field in a TesserCAD feature may hold either a plain number or
+ * an expression string that references named document parameters, e.g.
+ *   width * 2        wall + clearance      sqrt(area)      cos(rad(30)) * r
+ *
+ * This is what makes the model parametric: change one parameter and every
+ * feature that references it rebuilds.
+ *
+ * Deliberately NOT using eval()/Function(): the parser below only ever
+ * produces numbers, so a malicious project file cannot execute code.
  */
+
 const FUNCS = {
   sin: Math.sin, cos: Math.cos, tan: Math.tan,
   asin: Math.asin, acos: Math.acos, atan: Math.atan,
@@ -18,6 +28,7 @@ const FUNCS = {
 };
 
 const CONSTS = { pi: Math.PI, PI: Math.PI, e: Math.E, tau: Math.PI * 2, phi: (1 + Math.sqrt(5)) / 2 };
+
 const NUM = /^[0-9]*\.?[0-9]+(e[-+]?[0-9]+)?/i;
 const IDENT = /^[A-Za-z_][A-Za-z0-9_]*/;
 
@@ -37,10 +48,18 @@ function tokenize(src) {
   return out;
 }
 
+/* Recursive-descent parser. Grammar (lowest precedence first):
+     expr   := term (('+'|'-') term)*
+     term   := unary (('*'|'/'|'%') unary)*
+     unary  := ('-'|'+') unary | power
+     power  := atom ('^' unary)?           (right associative)
+     atom   := number | ident | ident '(' args ')' | '(' expr ')'
+*/
 function parse(tokens, scope) {
   let p = 0;
   const peek = () => tokens[p];
   const eat = (t) => { if (!tokens[p] || tokens[p].t !== t) throw new Error(`Expected "${t}"`); return tokens[p++]; };
+
   function expr() {
     let v = term();
     while (peek() && (peek().t === '+' || peek().t === '-')) {
@@ -103,11 +122,13 @@ function parse(tokens, scope) {
     }
     throw new Error(`Unexpected token "${tk.t}"`);
   }
+
   const value = expr();
   if (p !== tokens.length) throw new Error('Trailing characters in expression');
   return value;
 }
 
+/** Evaluate `src` (number or string) against a { name: number } scope. */
 export function evaluate(src, scope = {}) {
   if (typeof src === 'number') {
     if (!Number.isFinite(src)) throw new Error('Value is not finite');
@@ -119,10 +140,20 @@ export function evaluate(src, scope = {}) {
   return v;
 }
 
+/** Evaluate, falling back to `fallback` when the expression is invalid. */
 export function evalSafe(src, scope = {}, fallback = 0) {
   try { return evaluate(src, scope); } catch { return fallback; }
 }
 
+/**
+ * `{ ok, value, error }` — used by inputs that show inline validation.
+ *
+ * A deeply nested expression exhausts the recursive-descent parser's stack,
+ * and the engine's own message for that is "Maximum call stack size exceeded",
+ * which tells a user nothing they can act on. It is translated here, because
+ * this is the boundary where an error stops being a fact about the program and
+ * starts being something a person has to read.
+ */
 export function tryEval(src, scope = {}) {
   try { return { ok: true, value: evaluate(src, scope), error: null }; }
   catch (e) {
@@ -133,9 +164,19 @@ export function tryEval(src, scope = {}) {
   }
 }
 
+/**
+ * Resolve the document parameter list into a flat scope, allowing parameters
+ * to reference earlier parameters. Cycles resolve to an error on that entry.
+ */
 export function buildScope(params = []) {
+  // A null prototype, so a parameter can never be named after something on
+  // Object.prototype and so an expression can never reach one. The parser
+  // already guards its lookups with hasOwnProperty; this removes the question
+  // a second time, at the other end, where a parameter name arrives from a
+  // file somebody else wrote.
   const scope = Object.create(null);
   const errors = {};
+  // Two passes so order-independence works for simple chains.
   for (let pass = 0; pass < 4; pass++) {
     let progressed = false;
     for (const p of params) {

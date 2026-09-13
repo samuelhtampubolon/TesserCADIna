@@ -35,10 +35,10 @@ export const bus = new Bus();
 
 /** Topics used across the app (documented here so they stay discoverable). */
 export const T = {
-  DOC_CHANGED:    'doc:changed',
-  DOC_TOUCHED:    'doc:touched',
-  DOC_LOADED:     'doc:loaded',
-  REBUILT:        'geom:rebuilt',
+  DOC_CHANGED:    'doc:changed',      // structural change -> rebuild + full UI refresh
+  DOC_TOUCHED:    'doc:touched',      // cheap change -> UI refresh only, no rebuild
+  DOC_LOADED:     'doc:loaded',       // whole new document
+  REBUILT:        'geom:rebuilt',     // feature engine finished
   SELECTION:      'sel:changed',
   WORKSPACE:      'ws:changed',
   TOOL:           'tool:changed',
