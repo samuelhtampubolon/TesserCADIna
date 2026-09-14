@@ -469,5 +469,50 @@ if (mapMatch) {
     !indexSource.includes(`'sha256-${crlfDigest}'`));
 }
 
+/* ==================================== 9. the build is supply chain too */
+
+/**
+ * A workflow is code that runs with a token against this repository, so the
+ * two properties that decide what a compromised dependency could do there are
+ * asserted here rather than left to review.
+ *
+ * A mutable tag is the weak link. `uses: someone/action@v2` fetches whatever
+ * `v2` points at on the day the job runs, and the owner can repoint it. For an
+ * action in a job that holds `contents: write`, that is a write to this
+ * repository by someone else's later decision. GitHub's own actions are held
+ * to a softer standard here only because the same account owns the runner, the
+ * token and the platform: there is no separate party to compromise.
+ */
+const workflowDir = join(root, '.github', 'workflows');
+const workflows = existsSync(workflowDir)
+  ? readdirSync(workflowDir).filter(f => f.endsWith('.yml') || f.endsWith('.yaml'))
+  : [];
+
+ok('the repository has workflows to check at all', workflows.length > 0, `${workflows.length} found`);
+
+const noPermissions = [];
+const looseThirdParty = [];
+for (const file of workflows) {
+  const text = readFileSync(join(workflowDir, file), 'utf8');
+  // A top-level `permissions:` sits at column zero; a job-level one is indented.
+  if (!/^permissions:/m.test(text)) noPermissions.push(file);
+  for (const m of text.matchAll(/^\s*uses:\s*([^\s#]+)/gm)) {
+    const ref = m[1];
+    if (ref.startsWith('./') || ref.startsWith('docker://')) continue;
+    const [name, version = ''] = ref.split('@');
+    if (name.startsWith('actions/') || name.startsWith('github/')) continue;
+    if (!/^[0-9a-f]{40}$/.test(version)) looseThirdParty.push(`${file}: ${ref}`);
+  }
+}
+
+ok('every workflow states the token scope it needs instead of inheriting one',
+  noPermissions.length === 0, noPermissions.join(', '));
+ok('every third-party action is pinned to a commit, not to a tag its owner can move',
+  looseThirdParty.length === 0, looseThirdParty.join(', '));
+
+// A check that cannot fail proves nothing: make sure the pattern really does
+// reject the tag form it is meant to reject.
+ok('and that check would reject a tag', !/^[0-9a-f]{40}$/.test('v2'));
+
 console.log(fails ? `\n${fails} FAILURES` : '\nALL SECURITY CHECKS PASS');
 process.exit(fails ? 1 : 0);

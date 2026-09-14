@@ -236,9 +236,15 @@ jobs:
             dist-desktop/*.sha256
           if-no-files-found: error
 
+      # Pinned to a commit, not to `v2`. This is the one third-party action in
+      # the repository and it runs in a job holding `contents: write`, so a tag
+      # is the wrong thing to trust: a tag is a name its owner can repoint at
+      # any time, and the release job would fetch whatever it pointed at next.
+      # The commit is immutable. `git ls-remote` on the tag is how to re-resolve
+      # it when this is deliberately bumped.
       - name: Attach to the release
         if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         with:
           files: |
             dist-desktop/*.exe

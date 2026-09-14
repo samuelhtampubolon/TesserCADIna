@@ -763,4 +763,11 @@ export const PROSE = {
   ' close': ' tutup',
   'Recent': 'Terakhir dipakai',
   '{n} results': '{n} hasil',
+
+  /* ---- autosave failure ---- */
+  'Autosave could not write: this browser’s storage is full. Save the document to a file — what is on screen is safe, what is in storage is not.': 'Simpan otomatis gagal menulis: penyimpanan peramban ini penuh. Simpan dokumen ke berkas — yang di layar aman, yang di penyimpanan tidak.',
+
+  /* ---- x ---- */
+
+  /* ---- x ---- */
 };

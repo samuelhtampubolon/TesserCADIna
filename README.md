@@ -10,7 +10,7 @@ lebih besar. Angkanya ada di bawah.
 ![No build step](https://img.shields.io/badge/build-none-4c9fff)
 ![Bahasa Indonesia](https://img.shields.io/badge/UI-Bahasa%20Indonesia-4c9fff)
 ![202 commands](https://img.shields.io/badge/commands-202-8957e5)
-![1346 tests](https://img.shields.io/badge/tests-1346%20passing-3da639)
+![1355 tests](https://img.shields.io/badge/tests-1355%20passing-3da639)
 ![Touch ready](https://img.shields.io/badge/touch-ready-4c9fff)
 
 > **▶ Pakai sekarang, tanpa instalasi:**
@@ -96,7 +96,7 @@ npm install
 npm run dist
 ```
 
-Artefak: `TesserCADIna-1.0.0-windows-x64.zip` dan installer NSIS per-pengguna.
+Artefak: `TesserCADIna-1.1.0-windows-x64.zip` dan installer NSIS per-pengguna.
 Locale Chromium selain Inggris dan Indonesia dibuang, yang menghemat belasan MB.
 
 Ukuran itu diperiksa setiap build: langkah **The Windows download is the size the
@@ -118,7 +118,7 @@ yang ikut terbungkus, build merah alih-alih halaman ini diam-diam jadi salah.
 
 1. **GitHub Pages** — Settings → Pages → Source: GitHub Actions. Workflow tidak
    bisa mengaktifkannya sendiri.
-2. **Rilis desktop** — buat tag `v1.0.0` (harus sama dengan `desktop/package.json`)
+2. **Rilis desktop** — buat tag `v1.1.0` (harus sama dengan `desktop/package.json`)
    agar Actions membangun zip Windows/Linux. Tanda tangan kode Windows (sertifikat)
    tidak disertakan; zip unsigned.
 3. **Tidak ada build macOS** — pakai versi web, atau bangun sendiri dari `desktop/`.

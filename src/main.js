@@ -160,7 +160,7 @@ class App {
       Offline.install().then((r) => { this._offline = r; });
     });
 
-    this._autosave = setInterval(() => { if (store.dirty) { saveLocal(); this.markSaved(); } }, Math.max(5, this.prefs.autosaveSec) * 1000);
+    this.startAutosave(Math.max(5, this.prefs.autosaveSec));
     addEventListener('beforeunload', (e) => {
       saveLocal();
       if (store.dirty) { e.preventDefault(); e.returnValue = ''; }
@@ -466,6 +466,36 @@ class App {
   }
 
   markSaved() { $('#docDirty')?.classList.remove('on'); }
+
+  /**
+   * Autosave, and say so when it stops working.
+   *
+   * `saveLocal` returns false when the write is refused — browser storage is a
+   * few megabytes and one imported mesh is larger than that, so a full quota is
+   * the ordinary case rather than the exotic one. The indicator used to be
+   * cleared either way, which told the user the document was safe at the moment
+   * it stopped being written. The unload prompt still fires, because the
+   * document stays dirty, but an indicator that lies is worse than no
+   * indicator.
+   *
+   * Reported once per run of failures: a warning every few seconds is one the
+   * user learns to dismiss, and this one is worth reading.
+   */
+  startAutosave(seconds) {
+    clearInterval(this._autosave);
+    this._autosave = setInterval(() => {
+      if (!store.dirty) return;
+      if (saveLocal()) {
+        this.markSaved();
+        this._autosaveFailed = false;
+        return;
+      }
+      if (!this._autosaveFailed) {
+        this._autosaveFailed = true;
+        this.flash(t('Autosave could not write: this browser’s storage is full. Save the document to a file — what is on screen is safe, what is in storage is not.'), 'warn', 9000);
+      }
+    }, Math.max(5, seconds) * 1000);
+  }
 
   flash(msg, kind = 'info', ms = 3200) { toast(msg, kind, ms); }
 
@@ -1746,8 +1776,7 @@ class App {
             step: 5, min: 5, max: 600, precision: 0, suffix: ' s',
             onCommit: (v) => {
               this.setPref('autosaveSec', v);
-              clearInterval(this._autosave);
-              this._autosave = setInterval(() => { if (store.dirty) { saveLocal(); this.markSaved(); } }, v * 1000);
+              this.startAutosave(v);
             },
           }), { hint: 'Seconds between automatic saves into browser storage.' }),
           el('div', { class: 'btn-row' }, [

@@ -19,7 +19,7 @@
  * times. Asserting the posture means a future change that relaxes it fails
  * here instead of shipping in a binary.
  */
-import { readFileSync, writeFileSync, mkdtempSync, mkdirSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdtempSync, mkdirSync, existsSync, symlinkSync } from 'node:fs';
 import { join, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { tmpdir } from 'node:os';
@@ -102,6 +102,40 @@ ok('so is a CommonJS file, which is the shell and not the application',
 ok('and a dotfile', resolveSafely(appRoot, '/.env') === null);
 ok('the allowlist covers what the application actually ships',
   ['.html', '.js', '.css', '.json', '.svg', '.png'].every(e => TYPES.has(e)));
+
+/* --- a link inside the tree does not lend its containment to its target --- */
+// `path.resolve` collapses `..` and knows nothing about symbolic links, so a
+// path-only check passes a link that sits inside the tree and points outside
+// it. Named with an allowed extension it reads like an ordinary asset, and
+// serves whatever it points at.
+let links = true;
+try {
+  symlinkSync(join(sandbox, 'secret.txt'), join(appRoot, 'leak.txt'));
+  symlinkSync(join(sandbox, 'secret.txt'), join(appRoot, 'leak.png'));
+  mkdirSync(join(appRoot, 'sub'));
+  symlinkSync(sandbox, join(appRoot, 'sub', 'out'));
+} catch { links = false; }   // Windows without developer mode cannot make them
+
+if (links) {
+  ok('a symlink pointing outside the tree is refused, whatever it is called',
+    resolveSafely(appRoot, '/leak.txt') === null, String(resolveSafely(appRoot, '/leak.txt')));
+  ok('and naming it with an allowed extension does not help',
+    resolveSafely(appRoot, '/leak.png') === null, String(resolveSafely(appRoot, '/leak.png')));
+  ok('nor does reaching it through a linked directory',
+    resolveSafely(appRoot, '/sub/out/secret.txt') === null,
+    String(resolveSafely(appRoot, '/sub/out/secret.txt')));
+  // The point of the check is containment, not a ban on links: one that stays
+  // inside the tree is an ordinary file and is still served.
+  symlinkSync(join(appRoot, 'app.js'), join(appRoot, 'alias.js'));
+  ok('a link that stays inside the tree is still served',
+    resolveSafely(appRoot, '/alias.js') === join(appRoot, 'alias.js'),
+    String(resolveSafely(appRoot, '/alias.js')));
+  ok('the handler refuses the escaping link too, not just the resolver',
+    (await createHandler(appRoot)(new Request(`${ORIGIN}/leak.png`))).status === 404);
+} else {
+  ok('symlinks could not be created here, so containment against them is untested', true,
+    'skipped: the platform refused symlinkSync');
+}
 ok('and nothing executable or credential-shaped',
   !['.exe', '.cjs', '.sh', '.bat', '.pem', '.key', '.env'].some(e => TYPES.has(e)));
 

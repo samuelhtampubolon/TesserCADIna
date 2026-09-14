@@ -216,8 +216,25 @@ if (!app.requestSingleInstanceLock()) {
 
   // Deny every permission request. The application asks for none: no camera,
   // no microphone, no geolocation, no notifications, no clipboard read.
+  //
+  // The device handlers below are a separate gate, not a repetition of the one
+  // above: WebUSB, Web Serial and WebHID reach hardware through a device
+  // chooser that the permission handler does not sit in front of. Electron
+  // cancels a chooser nobody has registered a listener for, so this is defence
+  // in depth rather than a hole being closed — but "nothing was listening" is a
+  // property of a file somebody could add a listener to later, and this is a
+  // statement that they should not. A CAD application that renders local
+  // geometry has no business addressing a USB device.
   app.on('web-contents-created', (_event, contents) => {
     contents.session.setPermissionRequestHandler((_wc, _permission, callback) => callback(false));
     contents.session.setPermissionCheckHandler(() => false);
+    contents.session.setDevicePermissionHandler(() => false);
+    contents.session.setBluetoothPairingHandler((_details, callback) => callback({ cancelled: true }));
+    for (const chooser of ['select-usb-device', 'select-serial-port', 'select-hid-device']) {
+      contents.session.on(chooser, (event, _details, callback) => {
+        event.preventDefault();
+        callback('');
+      });
+    }
   });
 }
