@@ -26,6 +26,7 @@ const SUITES = [
   ['history', 'tests/history.mjs'],
   ['parallel', 'tests/parallel.mjs'],
   ['grammar', 'tests/speak.mjs'],
+  ['bahasa', 'tests/i18n.mjs'],
   ['fasteners', 'tests/fasteners.mjs'],
   ['hygiene', 'tests/hygiene.mjs'],
   ['drawing', 'tests/drawing.mjs'],
