@@ -6,18 +6,23 @@ mereka ada di
 
 ## Mengapa tidak di sini
 
-Build desktop TesserCADIna adalah aplikasi Electron: Chromium lengkap ikut
-tersertakan. Locale selain Inggris dan Indonesia dibuang, sehingga zip Windows
-berada **sekitar 80 MB (di bawah 90 MB)**.
+Build desktop TesserCADIna adalah aplikasi Electron, jadi Chromium lengkap ikut
+tersertakan dan berkasnya jauh lebih besar daripada batas **100 MB per berkas**
+yang diberlakukan GitHub di dalam repositori. Releases ada tepat untuk itu.
 
-GitHub menolak berkas di atas **100 MB** di dalam repositori. Releases ada
-tepat untuk itu.
+Ukurannya tidak ditulis ulang di halaman ini. Satu-satunya tempat yang
+menyebutkannya adalah [README](../README.md#build-desktop), karena angka di
+sana dicetak ulang oleh CI pada setiap build dan build merah kalau angkanya
+bergeser. Menyalinnya ke sini berarti membuat tempat kedua yang bisa basi, dan
+memang pernah basi: halaman ini menjanjikan "sekitar 80 MB" sampai ada yang
+benar-benar mengukurnya.
 
 ## Di mana mendapatkannya
 
 | | |
 |---|---|
 | **Releases** | [github.com/samuelhtampubolon/TesserCADIna/releases](https://github.com/samuelhtampubolon/TesserCADIna/releases) |
+| **Belum ada rilis?** | Setiap build "Desktop build" yang hijau menyimpan berkas yang sama sebagai artefak di tab **Actions** |
 | **Tanpa unduhan** | Versi web adalah aplikasi yang sama dan tidak memasang apa pun |
 
 Di Windows, ambil **`.zip`** (`TesserCADIna-1.1.0-windows-x64.zip`) bukan installer.
