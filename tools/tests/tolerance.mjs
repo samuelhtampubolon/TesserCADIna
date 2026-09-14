@@ -178,7 +178,7 @@ let wc = T.levers(wontClose, { target: 1.33, trials: 500 });
 ok('a chain whose nominals miss the spec reports that, not a tolerance fix',
   wc.closes === false && !wc.uniform && !wc.single.length, JSON.stringify({ closes: wc.closes, single: wc.single.length }));
 ok('and names the gap and the dimension change that would close it',
-  /closes at 20.0000 mm/.test(wc.nominal.note) && /19.5500 mm above the requirement/.test(wc.nominal.note) && /change a dimension by -19.5500 mm/.test(wc.nominal.note),
+  /menutup di 20.0000 mm/.test(wc.nominal.note) && /19.5500 mm di atas kebutuhan/.test(wc.nominal.note) && /ubah sebuah dimensi sebesar -19.5500 mm/.test(wc.nominal.note),
   wc.nominal.note.slice(0, 90));
 ok('a chain that does close still gets tolerance advice',
   T.levers(loose, { target: 1.33, trials: 500 }).closes === true);

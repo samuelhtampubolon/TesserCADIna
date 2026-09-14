@@ -23,6 +23,7 @@
  */
 import * as THREE from 'three';
 import { CATALOG, MATERIALS, UNITS, makeFeature, newDocument } from '../core/doc.js';
+import { t, tfmt } from '../core/i18n.js';
 
 /* --------------------------------------------------------- triangle store */
 
@@ -329,32 +330,35 @@ export function deviationVerdict({
   if (unit && max > tol) {
     return {
       grade: 'units', severity: 'block',
-      label: `The mesh is ${scale < 1 ? `1/${(1 / scale).toFixed(4).replace(/0+$/, '')}` : scale.toFixed(4).replace(/\.?0+$/, '')} the size of the model, which is ${unit[1]}, not a deviation. Rescale the import rather than chasing the shape.`,
+      label: tfmt('The mesh is {factor} the size of the model, which is {reading}, not a deviation. Rescale the import rather than chasing the shape.', { factor: scale < 1 ? `1/${(1 / scale).toFixed(4).replace(/0+$/, '')}` : scale.toFixed(4).replace(/\.?0+$/, ''), reading: t(unit[1]) }),
     };
   }
   if (shifted) {
     const v = offsetVector ? ` (${offsetVector.map(x => x.toFixed(2)).join(', ')})` : '';
     return {
       grade: 'shifted', severity: 'warn',
-      label: `The mesh sits ${offset.toFixed(3)}mm away from the model${v}. Register the two together before reading anything else into the shape.`,
+      label: tfmt('The mesh sits {mm}mm away from the model{axes}. Register the two together before reading anything else into the shape.', { mm: offset.toFixed(3), axes: v }),
     };
   }
   if (oneSided && max > tol) {
     return {
       grade: outward ? 'oversize' : 'undersize', severity: 'warn',
-      label: `Every difference is on the ${outward ? 'outside' : 'inside'}, up to ${max.toFixed(3)}mm. The mesh is uniformly ${outward ? 'larger' : 'smaller'} than the model, not misplaced.`,
+      label: tfmt(outward
+        ? 'Every difference is on the outside, up to {mm}mm. The mesh is uniformly larger than the model, not misplaced.'
+        : 'Every difference is on the inside, up to {mm}mm. The mesh is uniformly smaller than the model, not misplaced.',
+      { mm: max.toFixed(3) }),
     };
   }
   if (max <= tol) {
-    return { grade: 'match', severity: 'ok', label: `Within ${tol.toFixed(3)}mm everywhere. This is the same part.` };
+    return { grade: 'match', severity: 'ok', label: tfmt('Within {mm}mm everywhere. This is the same part.', { mm: tol.toFixed(3) }) };
   }
   if (rel < 0.002 && outsideFraction < 0.05) {
-    return { grade: 'tessellation', severity: 'ok', label: `Peak ${max.toFixed(3)}mm on ${(outsideFraction * 100).toFixed(1)}% of samples, spread thinly: consistent with a coarser tessellation of the same shape.` };
+    return { grade: 'tessellation', severity: 'ok', label: tfmt('Peak {mm}mm on {percent}% of samples, spread thinly: consistent with a coarser tessellation of the same shape.', { mm: max.toFixed(3), percent: (outsideFraction * 100).toFixed(1) }) };
   }
   if (rel < 0.02) {
     return { grade: 'detail', severity: 'warn', label: `Peak ${max.toFixed(3)}mm. Something small differs: a fillet, a chamfer or a hole size.` };
   }
-  return { grade: 'different', severity: 'block', label: `Peak ${max.toFixed(3)}mm, ${(rel * 100).toFixed(1)}% of the part size. These are different shapes.` };
+  return { grade: 'different', severity: 'block', label: tfmt('Peak {mm}mm, {percent}% of the part size. These are different shapes.', { mm: max.toFixed(3), percent: (rel * 100).toFixed(1) }) };
 }
 
 /**
@@ -439,7 +443,7 @@ export function importIntent(json) {
       const m = MATERIALS[f.material];
       made.appearance = { ...made.appearance, color: m.color, metalness: m.metal, roughness: m.rough };
     } else if (f.material) {
-      notes.push(`Feature "${f.name}" names material "${f.material}", which this library does not have. Using steel.`);
+      notes.push(tfmt('Feature "{feature}" names material "{material}", which this library does not have. Using steel.', { feature: f.name, material: f.material }));
     }
     if (!idOfName.has(f.name)) idOfName.set(f.name, made.id);
     return made;
@@ -450,7 +454,7 @@ export function importIntent(json) {
     if (!made) return;
     made.inputs = (f.consumes || []).map(name => {
       if ((counts.get(name) || 0) > 1) {
-        notes.push(`"${f.name}" consumes "${name}", and more than one feature has that name. The first was used.`);
+        notes.push(tfmt('"{feature}" consumes "{name}", and more than one feature has that name. The first was used.', { feature: f.name, name }));
       }
       const id = idOfName.get(name);
       if (!id) errors.push(`"${f.name}" consumes "${name}", which this file does not define.`);
@@ -459,7 +463,7 @@ export function importIntent(json) {
   });
 
   if (data.version && data.version > 1) {
-    notes.push(`This file was written by a newer intent format (version ${data.version}); anything it added has been ignored.`);
+    notes.push(tfmt('This file was written by a newer intent format (version {version}); anything it added has been ignored.', { version: data.version }));
   }
   return { doc: errors.length ? null : doc, errors, notes };
 }

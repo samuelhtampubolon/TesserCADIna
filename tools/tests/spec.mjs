@@ -79,7 +79,7 @@ const blocks = text.split('\n\n');
 const trimmed = blocks.filter(b => !b.startsWith('feature cylinder')).join('\n\n');
 review = S.reviewSpec(trimmed, doc);
 ok('deleting a feature another one consumes is caught before it is applied',
-  !review.ok && review.errors.some(e => /which no feature defines/.test(e.message)),
+  !review.ok && review.errors.some(e => /tidak didefinisikan fitur mana pun/.test(e.message)),
   review.errors.map(e => e.message)[0] || 'no error raised');
 ok('and nothing is applied on an error', review.summary.includes('nothing applied'));
 // Deleting a leaf feature with nothing pointing at it is fine.
@@ -133,9 +133,9 @@ let warn = S.fromSpec('part "X"\nunits furlongs\nfeature box "A"\n  w = 10\n  d 
 ok('an unknown unit warns and keeps mm', warn.doc && warn.doc.meta.units === 'mm' && warn.warnings.some(w => /Unknown unit/.test(w.message)));
 warn = S.fromSpec('part "X"\nfeature box "A"\n  w = 10\n  d = 10\n  h = 10\n  material = unobtainium\n');
 ok('an unknown material warns and falls back to steel',
-  warn.doc.features[0].material === 'steel' && warn.warnings.some(w => /Unknown material/.test(w.message)));
+  warn.doc.features[0].material === 'steel' && warn.warnings.some(w => /tidak dikenal; kembali ke baja/.test(w.message)));
 warn = S.fromSpec('part "X"\nfeature box "A"\n  w = 10\n');
-ok('an omitted dimension is defaulted but reported', warn.doc && warn.warnings.some(w => /not given, using the default/.test(w.message)),
+ok('an omitted dimension is defaulted but reported', warn.doc && warn.warnings.some(w => /tidak diberikan, memakai bawaan/.test(w.message)),
   warn.warnings.map(w => w.message).join('; '));
 ok('and the default is the catalogue value', warn.doc.features[0].params.d === 40);
 

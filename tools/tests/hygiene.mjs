@@ -127,7 +127,7 @@ const dupIssue = r.issues.find(i => i.id.startsWith('dup-'));
 ok('two identical payloads are spotted', !!dupIssue, r.issues.map(i => i.id).join(','));
 ok('the finding names both bodies', /Scan A/.test(dupIssue.detail) && /Scan B/.test(dupIssue.detail));
 ok('a different payload is not swept in', !/Different/.test(dupIssue.detail));
-ok('and it quotes the wasted bytes', /kB of the file/.test(dupIssue.detail), dupIssue.detail.slice(0, 120));
+ok('and it quotes the wasted bytes', /kB dari berkas/.test(dupIssue.detail), dupIssue.detail.slice(0, 120));
 ok('identical payloads hash the same', H.payloadHash(m1.data) === H.payloadHash(m2.data));
 ok('and different ones do not', H.payloadHash(m1.data) !== H.payloadHash(m3.data));
 ok('an empty payload hashes to nothing rather than colliding',
@@ -151,7 +151,7 @@ lonely.inputs = [zero.id];
 bad.features = [zero, one, lonely];
 r = H.inspect(bad);
 ok('a zero dimension is found', !!find(r, 'zero-'), r.issues.map(i => i.id).join(','));
-ok('and names which dimension it is', /d is zero/.test(find(r, 'zero-').detail), find(r, 'zero-').detail);
+ok('and names which dimension it is', /^d bernilai nol/.test(find(r, 'zero-').detail), find(r, 'zero-').detail);
 ok('a pattern of one is noted', !!find(r, 'pat1-'));
 ok('and only as a note, since it is harmless', find(r, 'pat1-').severity === 'note');
 ok('a boolean with one input is flagged', !!find(r, 'bool-'));

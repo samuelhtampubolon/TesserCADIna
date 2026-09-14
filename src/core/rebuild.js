@@ -14,6 +14,21 @@ import {
   buildPrimitive, buildExtrude, buildRevolve, shapesFromEntities,
   transformMatrix, recentre, triangleCount,
 } from './geometry.js';
+import { tfmt } from './i18n.js';
+
+/**
+ * A build failure as a sentence the user reads.
+ *
+ * Errors raised inside the boolean kernel carry a code and their numbers
+ * instead of prose, because that module is loaded into every worker and the
+ * dictionary is not. This is where the two are put back together.
+ */
+function readableError(err) {
+  if (err?.code === 'TRI_BUDGET') {
+    return tfmt('Boolean skipped: {k}k triangles exceeds the {budget}k budget. Reduce segment counts on the inputs.', err.data);
+  }
+  return err?.message || String(err);
+}
 import { catalogOf, MATERIALS } from './doc.js';
 
 const D2R = Math.PI / 180;
@@ -162,7 +177,7 @@ function evalOne(feature, ctx) {
   for (const id of feature.inputs) {
     const r = results.get(id);
     if (!r) throw new Error('Missing input feature');
-    if (r.error) throw new Error(`Input "${r.name}" failed`);
+    if (r.error) throw new Error(tfmt('Input "{name}" failed', { name: r.name }));
     for (const inst of r.instances) inputInstances.push(inst);
   }
 
@@ -403,7 +418,7 @@ export async function rebuildAsync(doc, { onProgress = null } = {}) {
       if (!job) {
         let result;
         try { result = { instances: evalOne(f, ctx), error: null, name: f.name }; }
-        catch (err) { result = { instances: [], error: err.message || String(err), name: f.name }; }
+        catch (err) { result = { instances: [], error: readableError(err), name: f.name }; }
         cache.set(f.id, { key, result });
         keys.set(f.id, key);
         results.set(f.id, result);
@@ -528,7 +543,7 @@ export function rebuild(doc) {
       const instances = evalOne(f, ctx);
       result = { instances, error: null, name: f.name };
     } catch (err) {
-      result = { instances: [], error: err.message || String(err), name: f.name };
+      result = { instances: [], error: readableError(err), name: f.name };
     }
     cache.set(f.id, { key, result });
     keys.set(f.id, key);

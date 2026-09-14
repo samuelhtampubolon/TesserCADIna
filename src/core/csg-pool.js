@@ -91,7 +91,7 @@ class Pool {
     this.idle.push(worker);
     if (job) {
       if (data.ok) { this.stats.completed++; job.resolve({ position: data.position, normal: data.normal }); }
-      else { this.stats.failed++; job.reject(new Error(data.error)); }
+      else { this.stats.failed++; job.reject(Object.assign(new Error(data.error), { code: data.code, data: data.data })); }
     }
     this._pump();
   }

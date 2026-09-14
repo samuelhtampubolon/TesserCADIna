@@ -318,7 +318,14 @@ export function booleanTriangles(op, operands) {
   let total = 0;
   for (const o of operands) total += o.position.length / 9;
   if (total > TRI_BUDGET) {
-    throw new Error(`Boolean skipped: ${Math.round(total / 1000)}k triangles exceeds the ${TRI_BUDGET / 1000}k budget. Reduce segment counts on the inputs.`);
+    // Carries the numbers rather than a sentence. This module is the worker's
+    // whole payload, and pulling a fourteen-hundred-entry dictionary into every
+    // worker to phrase one refusal would cost more than the refusal saves; the
+    // wording is put together where the error is shown instead.
+    const err = new Error(`Boolean skipped: ${Math.round(total / 1000)}k triangles exceeds the ${TRI_BUDGET / 1000}k budget.`);
+    err.code = 'TRI_BUDGET';
+    err.data = { k: Math.round(total / 1000), budget: TRI_BUDGET / 1000 };
+    throw err;
   }
 
   let acc = trianglesToPolygons(operands[0].position, operands[0].normal, operands[0].matrix);

@@ -15,6 +15,6 @@ self.onmessage = (e) => {
     const out = booleanTriangles(op, operands);
     self.postMessage({ id, ok: true, ...out }, [out.position.buffer, out.normal.buffer]);
   } catch (err) {
-    self.postMessage({ id, ok: false, error: err.message || String(err) });
+    self.postMessage({ id, ok: false, error: err.message || String(err), code: err.code, data: err.data });
   }
 };

@@ -25,6 +25,7 @@
 import { el, clear, icon, dropdown, closeDropdown, closeQuickMenu } from './shell.js';
 import { menuDefs } from './menus.js';
 import { store } from '../core/doc.js';
+import { tfmt } from '../core/i18n.js';
 
 /*
  * These must stay in lockstep with the breakpoint header in styles/app.css.
@@ -349,7 +350,7 @@ export class MobileShell {
 
     wrap.appendChild(el('button', {
       class: 'sheet-search', onclick: () => { this.closeSheet(); app.openPalette(); },
-    }, [icon('search', { size: 17 }), el('span', { text: `Search all ${app.commands.length} commands…` }), el('kbd', { text: '⌘K' })]));
+    }, [icon('search', { size: 17 }), el('span', { text: tfmt('Search all {n} commands…', { n: app.commands.length }) }), el('kbd', { text: '⌘K' })]));
 
     const quick = ['edit.undo', 'edit.redo', 'file.save', 'file.template', 'edit.prefs', 'help.quickstart'];
     wrap.appendChild(el('div', { class: 'sheet-quick' }, quick.map(id => {

@@ -337,4 +337,79 @@ export const PROSE = {
   'This browser cannot keep an offline copy. Everything else works the same; you just need the page to load.': 'Peramban ini tidak bisa menyimpan salinan offline. Semua yang lain bekerja sama saja; Anda hanya perlu halamannya termuat.',
   'Delete everything stored in this browser?': 'Hapus semua yang tersimpan di peramban ini?',
   'Your saved versions, standards, decisions, macros and the autosaved document all go. Files you exported are untouched. This cannot be undone.': 'Versi tersimpan, standar, keputusan, makro, dan dokumen yang tersimpan otomatis semuanya hilang. Berkas yang sudah Anda ekspor tidak tersentuh. Ini tidak bisa dibatalkan.',
+
+  /* ---- templates: ui and io ---- */
+  'Nothing called “{name}”.': 'Tidak ada yang bernama “{name}”.',
+  '{n} features failed to build': '{n} fitur gagal dibangun',
+  'Select all {type} objects': 'Pilih semua objek {type}',
+  'All {n} checks pass for {process}.': 'Semua {n} pemeriksaan lolos untuk {process}.',
+  '{n} more findings. Open the full report for all of them.': '{n} temuan lagi. Buka laporan lengkap untuk semuanya.',
+  'Keyframes for “{name}” at t = {t} s. Values are offsets from the modelled position.': 'Keyframe untuk “{name}” pada t = {t} d. Nilainya adalah offset dari posisi model.',
+  'Body settings for “{name}”': 'Pengaturan body untuk “{name}”',
+  'Add a {channel} key at the playhead': 'Tambah key {channel} di playhead',
+  'Search all {n} commands…': 'Cari semua {n} perintah…',
+  'glTF export failed: {error}': 'Ekspor glTF gagal: {error}',
+  'PNG export failed: {error}': 'Ekspor PNG gagal: {error}',
+  'Imported {n} bodies from {file}': '{n} body diimpor dari {file}',
+  'Imported {n} entities from {file}': '{n} entitas diimpor dari {file}',
+  'Don’t know how to open “.{ext}” — supported: .tcad .stl .obj .dxf': 'Tidak tahu cara membuka “.{ext}” — yang didukung: .tcad .stl .obj .dxf',
+
+  /* ---- templates: ui and io (cont) ---- */
+  't {t}s · value {v} · {ease}\nDrag to move · Alt-click to delete': 't {t}d · nilai {v} · {ease}\nSeret untuk memindahkan · Alt-klik untuk menghapus',
+  '{name} — click to make active, double-click to rename': '{name} — klik untuk mengaktifkan, klik ganda untuk ganti nama',
+
+  /* ---- templates: hygiene ---- */
+  'The furthest point is {metres} m from the origin. A 32-bit float keeps about seven significant digits, so the smallest distance that can be represented there is {step}. Features smaller than that cannot be positioned accurately, and the symptom is a model that looks subtly wrong in ways nothing in the feature tree explains.': 'Titik terjauh berjarak {metres} m dari origin. Float 32-bit menyimpan sekitar tujuh angka penting, jadi jarak terkecil yang bisa diwakili di sana adalah {step}. Fitur yang lebih kecil dari itu tidak bisa diposisikan dengan akurat, dan gejalanya adalah model yang terlihat sedikit salah tanpa penjelasan apa pun di pohon fitur.',
+  'Geometry is {metres} m from the origin': 'Geometri berjarak {metres} m dari origin',
+  'The smallest representable step out there is {step}. That is still fine for millimetre work and is not fine for microns.': 'Langkah terkecil yang bisa diwakili di sana adalah {step}. Itu masih memadai untuk pekerjaan milimeter dan tidak memadai untuk mikron.',
+  '{name} is the furthest out. Centring the design costs nothing and buys back precision.': '{name} paling jauh ke luar. Memusatkan desain tidak berbiaya apa pun dan mengembalikan presisi.',
+  'A feature': 'Sebuah fitur',
+  '{n} copies of the same mesh': '{n} salinan mesh yang sama',
+  '{names} hold identical triangles. That is {kb} kB of the file saying the same thing more than once.': '{names} menyimpan segitiga yang identik. Itu {kb} kB dari berkas yang mengatakan hal sama lebih dari sekali.',
+  '{name} has a zero dimension': '{name} punya dimensi nol',
+  '{fields} is zero, so this feature produces no geometry while still costing a rebuild.': '{fields} bernilai nol, jadi fitur ini tidak menghasilkan geometri tetapi tetap memakan satu rebuild.',
+  ' and ': ' dan ',
+  '{name} is a pattern of one': '{name} adalah pattern berisi satu',
+  '{name} has nothing to combine': '{name} tidak punya apa pun untuk digabungkan',
+  'A boolean needs two bodies and has {n}.': 'Boolean butuh dua body dan punya {n}.',
+  '{mb} MB of triangles, {percent}% of the document.': '{mb} MB segitiga, {percent}% dari dokumen.',
+
+  /* ---- templates: hygiene (helper) ---- */
+  '{n} µm': '{n} µm',
+  '{n} mm': '{n} mm',
+
+  /* ---- templates: deviation, doctor, recognise, tolerance ---- */
+  'The mesh is {factor} the size of the model, which is {reading}, not a deviation. Rescale the import rather than chasing the shape.': 'Mesh-nya berukuran {factor} dari model, yang berarti {reading}, bukan deviasi. Skalakan ulang impornya alih-alih mengejar bentuknya.',
+  'The mesh sits {mm}mm away from the model{axes}. Register the two together before reading anything else into the shape.': 'Mesh-nya berjarak {mm}mm dari model{axes}. Impitkan keduanya dulu sebelum menyimpulkan apa pun dari bentuknya.',
+  'Every difference is on the outside, up to {mm}mm. The mesh is uniformly larger than the model, not misplaced.': 'Setiap perbedaan ada di sisi luar, sampai {mm}mm. Mesh-nya seragam lebih besar daripada model, bukan salah tempat.',
+  'Every difference is on the inside, up to {mm}mm. The mesh is uniformly smaller than the model, not misplaced.': 'Setiap perbedaan ada di sisi dalam, sampai {mm}mm. Mesh-nya seragam lebih kecil daripada model, bukan salah tempat.',
+  'Within {mm}mm everywhere. This is the same part.': 'Dalam {mm}mm di mana pun. Ini part yang sama.',
+  'Peak {mm}mm on {percent}% of samples, spread thinly: consistent with a coarser tessellation of the same shape.': 'Puncak {mm}mm pada {percent}% sampel, tersebar tipis: konsisten dengan teselasi yang lebih kasar dari bentuk yang sama.',
+  'Peak {mm}mm, {percent}% of the part size. These are different shapes.': 'Puncak {mm}mm, {percent}% dari ukuran part. Ini bentuk yang berbeda.',
+  'Feature "{feature}" names material "{material}", which this library does not have. Using steel.': 'Fitur "{feature}" menyebut material "{material}", yang tidak ada di pustaka ini. Memakai baja.',
+  '"{feature}" consumes "{name}", and more than one feature has that name. The first was used.': '"{feature}" mengonsumsi "{name}", dan lebih dari satu fitur bernama itu. Yang pertama yang dipakai.',
+  'This file was written by a newer intent format (version {version}); anything it added has been ignored.': 'Berkas ini ditulis oleh format intent yang lebih baru (versi {version}); apa pun yang ditambahkannya diabaikan.',
+  '{process} needs at least {mm}mm.': '{process} butuh setidaknya {mm}mm.',
+  'Open the wall to {mm}mm': 'Tebalkan dindingnya ke {mm}mm',
+  'They genuinely intersect, centred at {x}, {y}, {z}': 'Keduanya benar-benar beririsan, berpusat di {x}, {y}, {z}',
+  'Defined as {value}, referenced by no feature.': 'Didefinisikan sebagai {value}, tidak dirujuk fitur mana pun.',
+  'The document defines {n} parameters that these features ignore.': 'Dokumen ini mendefinisikan {n} parameter yang diabaikan fitur-fitur ini.',
+  'Relink to the {n} closed profiles in Draft': 'Tautkan ulang ke {n} profil tertutup di Draft',
+  '{n}k triangles is past the {limit}k analysis limit.': '{n}k segitiga melewati batas analisis {limit}k.',
+  'The nominal chain closes at {mu} mm, which is {miss} mm above the requirement. Tightening tolerances cannot reach a number the nominals never sum to: change a dimension by {delta} mm, or check that every link’s direction is right.': 'Rantai nominal menutup di {mu} mm, yaitu {miss} mm di atas kebutuhan. Memperketat toleransi tidak bisa mencapai angka yang nominalnya sendiri tidak pernah jumlahkan: ubah sebuah dimensi sebesar {delta} mm, atau periksa arah setiap tautan sudah benar.',
+  'The nominal chain closes at {mu} mm, which is {miss} mm below the requirement. Tightening tolerances cannot reach a number the nominals never sum to: change a dimension by {delta} mm, or check that every link’s direction is right.': 'Rantai nominal menutup di {mu} mm, yaitu {miss} mm di bawah kebutuhan. Memperketat toleransi tidak bisa mencapai angka yang nominalnya sendiri tidak pernah jumlahkan: ubah sebuah dimensi sebesar {delta} mm, atau periksa arah setiap tautan sudah benar.',
+
+  /* ---- templates: spec and the engine ---- */
+  'Unknown feature type "{type}"; it is written out but will not rebuild.': 'Tipe fitur "{type}" tidak dikenal; ia tetap ditulis tetapi tidak akan dibangun ulang.',
+  '{n} triangles stay attached to the document; the text records only that they exist.': '{n} segitiga tetap melekat pada dokumen; teksnya hanya mencatat bahwa mereka ada.',
+  'Unknown material "{material}"; falling back to steel.': 'Material "{material}" tidak dikenal; kembali ke baja.',
+  '"{key}" is reserved and was ignored.': '"{key}" adalah kata cadangan dan diabaikan.',
+  '{feature}: {field} not given, using the default {value}.': '{feature}: {field} tidak diberikan, memakai bawaan {value}.',
+  '{feature}: {field} "{value}" does not evaluate ({error}).': '{feature}: {field} "{value}" tidak bisa dihitung ({error}).',
+  '{feature} refers to {refs}, which no feature defines.': '{feature} merujuk ke {refs}, yang tidak didefinisikan fitur mana pun.',
+  'Parameter "{name}" is not a finite number': 'Parameter "{name}" bukan angka terhingga',
+  'Input "{name}" failed': 'Masukan "{name}" gagal',
+
+  /* ---- templates: the boolean kernel ---- */
+  'Boolean skipped: {k}k triangles exceeds the {budget}k budget. Reduce segment counts on the inputs.': 'Boolean dilewati: {k}k segitiga melebihi anggaran {budget}k. Turunkan jumlah segmen pada masukannya.',
 };

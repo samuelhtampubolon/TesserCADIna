@@ -33,6 +33,16 @@
  * applies on the user's say-so, one undo step each.
  */
 import { CATALOG } from '../core/doc.js';
+import { t, tfmt } from '../core/i18n.js';
+
+/**
+ * A float32 step as a unit the reader can act on.
+ *
+ * Sub-millimetre steps read as microns because "0.000031 mm" is a number
+ * nobody compares against a tolerance, and the whole point of the finding is
+ * that the number should be compared against one.
+ */
+const stepLabel = (step) => (step < 1 ? tfmt('{n} µm', { n: (step * 1000).toFixed(2) }) : tfmt('{n} mm', { n: step.toFixed(3) }));
 
 /** float32 keeps ~24 bits of mantissa, so this is its step at a given size. */
 export function precisionAt(distanceMm) {
@@ -131,15 +141,15 @@ export function inspect(doc, build = null) {
   if (worst > 100000) {
     add({
       id: 'far-origin', severity: 'block', title: 'Geometry is at survey coordinates',
-      detail: `The furthest point is ${(worst / 1000).toFixed(1)} m from the origin. A 32-bit float keeps about seven significant digits, so the smallest distance that can be represented there is ${step < 1 ? `${(step * 1000).toFixed(2)} µm` : `${step.toFixed(3)} mm`}. Features smaller than that cannot be positioned accurately, and the symptom is a model that looks subtly wrong in ways nothing in the feature tree explains.`,
+      detail: tfmt('The furthest point is {metres} m from the origin. A 32-bit float keeps about seven significant digits, so the smallest distance that can be represented there is {step}. Features smaller than that cannot be positioned accurately, and the symptom is a model that looks subtly wrong in ways nothing in the feature tree explains.', { metres: (worst / 1000).toFixed(1), step: stepLabel(step) }),
       why: 'This is arithmetic, not a preference. Moving the design to the origin and keeping the real-world coordinate as a note is what every package that survives large sites does.',
       fix: recentreFix(doc, boxCentre(build)),
     });
   } else if (worst > 8000) {
     add({
-      id: 'far-origin', severity: 'warn', title: `Geometry is ${(worst / 1000).toFixed(1)} m from the origin`,
-      detail: `The smallest representable step out there is ${step < 1 ? `${(step * 1000).toFixed(2)} µm` : `${step.toFixed(3)} mm`}. That is still fine for millimetre work and is not fine for microns.`,
-      why: `${worstName || 'A feature'} is the furthest out. Centring the design costs nothing and buys back precision.`,
+      id: 'far-origin', severity: 'warn', title: tfmt('Geometry is {metres} m from the origin', { metres: (worst / 1000).toFixed(1) }),
+      detail: tfmt('The smallest representable step out there is {step}. That is still fine for millimetre work and is not fine for microns.', { step: stepLabel(step) }),
+      why: tfmt('{name} is the furthest out. Centring the design costs nothing and buys back precision.', { name: worstName || t('A feature') }),
       fix: recentreFix(doc, boxCentre(build)),
     });
   }
@@ -158,8 +168,8 @@ export function inspect(doc, build = null) {
     const bytes = group.slice(1).reduce((n, f) => n + weightOf(f), 0);
     add({
       id: `dup-${h}`, severity: 'warn',
-      title: `${group.length} copies of the same mesh`,
-      detail: `${group.map(f => f.name).join(', ')} hold identical triangles. That is ${(bytes / 1024).toFixed(0)} kB of the file saying the same thing more than once.`,
+      title: tfmt('{n} copies of the same mesh', { n: group.length }),
+      detail: tfmt('{names} hold identical triangles. That is {kb} kB of the file saying the same thing more than once.', { names: group.map(f => f.name).join(', '), kb: (bytes / 1024).toFixed(0) }),
       why: 'Pointing the duplicates at one copy leaves every body exactly where it is: the geometry is shared, the transforms stay separate. This is what a game engine calls deduplication.',
       fix: dedupFix(group),
     });
@@ -179,15 +189,15 @@ export function inspect(doc, build = null) {
     }
     if (zero.length) {
       add({
-        id: `zero-${f.id}`, severity: 'warn', title: `${f.name} has a zero dimension`,
-        detail: `${zero.join(' and ')} ${zero.length === 1 ? 'is' : 'are'} zero, so this feature produces no geometry while still costing a rebuild.`,
+        id: `zero-${f.id}`, severity: 'warn', title: tfmt('{name} has a zero dimension', { name: f.name }),
+        detail: tfmt('{fields} is zero, so this feature produces no geometry while still costing a rebuild.', { fields: zero.join(t(' and ')) }),
         why: 'Either it was left unfinished or it is driven by a parameter that resolved to zero. Both are worth knowing about before a customer sees the file.',
         fix: null,
       });
     }
     if ((f.type === 'patternLinear' || f.type === 'patternCircular') && Math.round(f.params?.count ?? 0) <= 1) {
       add({
-        id: `pat1-${f.id}`, severity: 'note', title: `${f.name} is a pattern of one`,
+        id: `pat1-${f.id}`, severity: 'note', title: tfmt('{name} is a pattern of one', { name: f.name }),
         detail: 'A pattern with a count of one is a copy of its input and nothing more.',
         why: 'Harmless, but it hides the fact that the count never got set, and a reader of the tree cannot tell that from looking.',
         fix: null,
@@ -195,8 +205,8 @@ export function inspect(doc, build = null) {
     }
     if (f.type === 'boolean' && (f.inputs?.length ?? 0) < 2) {
       add({
-        id: `bool-${f.id}`, severity: 'warn', title: `${f.name} has nothing to combine`,
-        detail: `A boolean needs two bodies and has ${f.inputs?.length ?? 0}.`,
+        id: `bool-${f.id}`, severity: 'warn', title: tfmt('{name} has nothing to combine', { name: f.name }),
+        detail: tfmt('A boolean needs two bodies and has {n}.', { n: f.inputs?.length ?? 0 }),
         why: 'Usually its other input was deleted. The Design Doctor can reconnect it; until then it produces nothing.',
         fix: null,
       });
@@ -222,7 +232,7 @@ export function inspect(doc, build = null) {
   if (meshBytes > 4e6) {
     add({
       id: 'heavy-mesh', severity: 'note', title: 'Imported meshes are most of this file',
-      detail: `${(meshBytes / 1e6).toFixed(1)} MB of triangles, ${(weight.meshShare * 100).toFixed(0)}% of the document.`,
+      detail: tfmt('{mb} MB of triangles, {percent}% of the document.', { mb: (meshBytes / 1e6).toFixed(1), percent: (weight.meshShare * 100).toFixed(0) }),
       why: 'Imported triangles cannot be parameterised and do not compress in JSON. If a mesh is only there for reference, deleting it after the parametric features are built keeps the file small.',
       fix: null,
     });

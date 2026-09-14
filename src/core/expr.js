@@ -11,6 +11,7 @@
  * Deliberately NOT using eval()/Function(): the parser below only ever
  * produces numbers, so a malicious project file cannot execute code.
  */
+import { tfmt } from './i18n.js';
 
 const FUNCS = {
   sin: Math.sin, cos: Math.cos, tan: Math.tan,
@@ -114,7 +115,7 @@ function parse(tokens, scope) {
       }
       if (Object.prototype.hasOwnProperty.call(scope, name)) {
         const v = scope[name];
-        if (typeof v !== 'number' || !Number.isFinite(v)) throw new Error(`Parameter "${name}" is not a finite number`);
+        if (typeof v !== 'number' || !Number.isFinite(v)) throw new Error(tfmt('Parameter "{name}" is not a finite number', { name }));
         return v;
       }
       if (Object.prototype.hasOwnProperty.call(CONSTS, name)) return CONSTS[name];

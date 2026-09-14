@@ -34,7 +34,7 @@ ok('a shape compared with itself deviates by nothing', map.ok && map.max < 1e-6,
 ok('and the verdict says it is the same part', map.verdict.grade === 'match', map.verdict.label);
 ok('the RMS is zero too', map.rms < 1e-6);
 ok('nothing falls outside tolerance', map.outside === 0);
-ok('the summary reads as a sentence', /same part/.test(D.deviationSummary(map).line), D.deviationSummary(map).line);
+ok('the summary reads as a sentence', /part yang sama/.test(D.deviationSummary(map).line), D.deviationSummary(map).line);
 
 /* ---- a grown box deviates by the growth ---- */
 map = D.deviationMap(box(61, 40, 20), box(60, 40, 20));
@@ -59,7 +59,7 @@ ok('and it is called a shift, not a shape difference', map.verdict.grade === 'sh
   `${map.verdict.grade}: ${map.verdict.label}`);
 ok('the offset is measured, and in the right direction',
   near(map.offset, 3, 1e-6) && near(map.offsetVector[0], 3, 1e-6), map.offsetVector.map(v => v.toFixed(2)).join(', '));
-ok('and the advice is to register the two first', /Register the two together/.test(map.verdict.label));
+ok('and the advice is to register the two first', /Impitkan keduanya dulu/.test(map.verdict.label));
 ok('a part in the right place reports no offset',
   D.deviationMap(box(61, 40, 20), box(60, 40, 20)).offset < 1e-9);
 
@@ -67,13 +67,13 @@ ok('a part in the right place reports no offset',
 map = D.deviationMap(box(60 * 25.4, 40 * 25.4, 20 * 25.4), box(60, 40, 20));
 ok('a part 25.4x too big is flagged as a unit mismatch, not a shape difference',
   map.verdict.grade === 'units', `${map.verdict.grade}: ${map.verdict.label}`);
-ok('and the advice names inches', /inches read as millimetres/.test(map.verdict.label), map.verdict.label);
+ok('and the advice names inches', /inci terbaca sebagai milimeter/.test(map.verdict.label), map.verdict.label);
 ok('the scale factor itself is reported', near(map.scale, 25.4, 0.01), map.scale.toFixed(4));
 let shrunk = D.deviationMap(box(60 / 25.4, 40 / 25.4, 20 / 25.4), box(60, 40, 20));
 ok('and the mistake is caught the other way round too',
-  shrunk.verdict.grade === 'units' && /millimetres read as inches/.test(shrunk.verdict.label), shrunk.verdict.label);
+  shrunk.verdict.grade === 'units' && /milimeter terbaca sebagai inci/.test(shrunk.verdict.label), shrunk.verdict.label);
 let cm = D.deviationMap(box(600, 400, 200), box(60, 40, 20));
-ok('a centimetre mix-up is named as one', /centimetres/.test(cm.verdict.label), cm.verdict.label);
+ok('a centimetre mix-up is named as one', /sentimeter/.test(cm.verdict.label), cm.verdict.label);
 ok('a matching part is never called a unit error',
   D.deviationMap(box(60, 40, 20), box(60, 40, 20)).verdict.grade === 'match');
 
@@ -163,7 +163,7 @@ const dupDoc = structuredClone(doc);
 dupDoc.features[1].name = 'Plate';
 const dup = D.importIntent(designIntent(dupDoc, build));
 ok('two features with one name is a note, not a silent pick',
-  dup.notes.some(n => /more than one feature has that name/.test(n)), dup.notes.join('; '));
+  dup.notes.some(n => /lebih dari satu fitur bernama itu/.test(n)), dup.notes.join('; '));
 ok('and the document still imports so the user can rename', !!dup.doc);
 
 /* ---- error paths ---- */
@@ -179,9 +179,9 @@ bad = D.importIntent({ format: 'tessercad.design-intent', features: [{ name: 'A'
 ok('a dangling consumes reference is an error', /does not define/.test(bad.errors[0]), bad.errors[0]);
 let fwd = D.importIntent({ format: 'tessercad.design-intent', version: 9, document: { name: 'Future' }, features: [] });
 ok('a newer format version imports with a note about what was ignored',
-  !!fwd.doc && fwd.notes.some(n => /newer intent format/.test(n)), fwd.notes.join('; '));
+  !!fwd.doc && fwd.notes.some(n => /format intent yang lebih baru/.test(n)), fwd.notes.join('; '));
 let odd = D.importIntent({ format: 'tessercad.design-intent', features: [{ name: 'A', type: 'box', material: 'unobtainium', parameters: { w: 5, d: 5, h: 5 } }] });
-ok('an unknown material falls back with a note', odd.doc.features[0].material === 'steel' && odd.notes.some(n => /does not have/.test(n)));
+ok('an unknown material falls back with a note', odd.doc.features[0].material === 'steel' && odd.notes.some(n => /tidak ada di pustaka ini/.test(n)));
 odd = D.importIntent({ format: 'tessercad.design-intent', document: { units: 'furlongs' }, features: [] });
 ok('an unknown unit falls back to mm', odd.doc.meta.units === 'mm');
 ok('a file with no format field is accepted, since older exports lacked it',
