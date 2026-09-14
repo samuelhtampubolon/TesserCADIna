@@ -295,7 +295,7 @@ check('an unset limit falls back to the process', std.minFeature === 0.8, String
 check('the studio exports as one portable file', std.exported === 'studio' && std.hasStandards);
 
 const persisted = await page.evaluate(() => {
-  const raw = JSON.parse(localStorage.getItem('tessercad.studio.v1'));
+  const raw = JSON.parse(localStorage.getItem('tessercadina.studio.v1'));
   return { process: raw.standards.process, decisions: raw.decisions.length, macros: raw.macros.length };
 });
 check('standards, decisions and macros all persist', persisted.process === 'fdm' && persisted.decisions > 0 && persisted.macros > 0, JSON.stringify(persisted));

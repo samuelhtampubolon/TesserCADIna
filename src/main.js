@@ -2281,7 +2281,7 @@ class App {
       section('Portability', [
         el('div', { class: 'hint', text: 'Standards, decisions and macros as one file, to move between machines or hand to a colleague.' }),
         el('div', { class: 'btn-row' }, [
-          el('button', { class: 'btn sm', text: 'Export studio', onclick: () => IO.download('tessercad-studio.json', Studio.exportStudio(), 'application/json') }),
+          el('button', { class: 'btn sm', text: 'Export studio', onclick: () => IO.download('tessercadina-studio.json', Studio.exportStudio(), 'application/json') }),
           el('button', {
             class: 'btn sm', text: 'Import studio…',
             onclick: async () => {

@@ -20,7 +20,7 @@ import { MATERIALS } from '../core/doc.js';
 import { processOf } from './process.js';
 import { standards } from './standards.js';
 
-const SEEN_KEY = 'tessercad.why.seen.v1';
+const SEEN_KEY = 'tessercadina.why.seen.v1';
 
 function seen() {
   try { return new Set(JSON.parse(localStorage.getItem(SEEN_KEY) || '[]')); }

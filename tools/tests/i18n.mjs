@@ -156,6 +156,30 @@ ok('every exemption carries a reason', [...EXEMPT.values()].every(r => r && r.le
 const empty = Object.entries(ID).filter(([, v]) => typeof v !== 'string' || !v.trim());
 ok('no entry is empty', empty.length === 0, empty.map(([k]) => JSON.stringify(k)).join(', '));
 
+/**
+ * A key written twice is invisible: the object literal keeps the last one and
+ * the earlier line sits in the file looking authoritative. Six had accumulated,
+ * one of them with two different translations, so this is checked against the
+ * text of the tables rather than against the merged object, which is the only
+ * place the duplicate still exists.
+ */
+const ENTRY = /^ {2}('(?:[^'\\]|\\.)*'): /gm;
+const dupes = [];
+for (const table of ['lang-interface.js', 'lang-prose.js']) {
+  const text = readFileSync(join(src, 'core', table), 'utf8');
+  const seen = new Set();
+  for (const m of text.matchAll(ENTRY)) {
+    if (seen.has(m[1])) dupes.push(`${table}: ${m[1]}`);
+    seen.add(m[1]);
+  }
+}
+ok('no string is translated twice in the same table', dupes.length === 0, dupes.join(', '));
+
+const ifaceKeys = new Set([...readFileSync(join(src, 'core', 'lang-interface.js'), 'utf8').matchAll(ENTRY)].map(m => m[1]));
+const proseDupes = [...readFileSync(join(src, 'core', 'lang-prose.js'), 'utf8').matchAll(ENTRY)]
+  .map(m => m[1]).filter(k => ifaceKeys.has(k));
+ok('and no string appears in both tables', proseDupes.length === 0, proseDupes.join(', '));
+
 /* ------------------------------------------------------------ t() contract */
 
 ok('t() returns the translation for a known string', t('Ready') === 'Siap', t('Ready'));
@@ -166,6 +190,46 @@ ok('t() passes an unknown string through rather than blanking it',
 ok('t() survives null and empty input', t(null) === null && t('') === '');
 ok('tfmt() fills placeholders after translating',
   tfmt('Hidden {n}', { n: 3 }) === t('Hidden {n}').replace('{n}', '3'));
+
+/* ---------------------------------------- the ownership panel tells the truth */
+
+/**
+ * The ownership report is the one list a user is invited to trust literally:
+ * it claims to name everything on the machine, and the same list is what the
+ * delete button removes. A key the application writes but this list omits is
+ * data the panel swears is absent and the delete leaves behind, so the list is
+ * checked against the source rather than against itself.
+ */
+globalThis.localStorage ??= { getItem: () => null, setItem: () => {}, removeItem: () => {} };
+const offline = await import('../../src/intel/offline.js');
+
+const declared = new Set(offline.localData().map(r => r.key));
+
+const written = new Set();
+for (const file of files) {
+  for (const m of readFileSync(file, 'utf8').matchAll(/'(tessercadina\.[A-Za-z0-9_.-]+)'/g)) written.add(m[1]);
+}
+
+const unreported = [...written].filter(k => !declared.has(k));
+ok('every key the application writes is named in the ownership report',
+  unreported.length === 0, unreported.join(', '));
+
+const phantom = [...declared].filter(k => !written.has(k));
+ok('and the report names nothing the application never writes',
+  phantom.length === 0, phantom.join(', '));
+
+ok('the report is not empty', declared.size >= 5, `${declared.size} keys`);
+
+ok('every key is namespaced to this application, not shared with TesserCAD',
+  [...declared].every(k => k.startsWith('tessercadina.')),
+  [...declared].filter(k => !k.startsWith('tessercadina.')).join(', '));
+
+// Not a translation table, so the sweep above cannot see these: they are
+// written in Indonesian where they are defined.
+const ENGLISH = /\b(the|your|and|you|saved|which|open|preferences|notes)\b/i;
+const englishRows = offline.localData().filter(r => ENGLISH.test(r.what));
+ok('and each one describes itself in Indonesian',
+  englishRows.length === 0, englishRows.map(r => `${r.key}: ${r.what}`).join(' | '));
 
 /* ------------------------------------------- the chrome is Indonesian too */
 

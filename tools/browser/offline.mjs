@@ -61,7 +61,7 @@ const st = await page.evaluate(async () => (await import('/src/intel/offline.js'
 ok('a service worker registers and takes control', st.controlled === true, JSON.stringify({ registered: st.registered, controlled: st.controlled }));
 ok('it caches the whole application, not a page of it', st.files >= 50, `${st.files} files`);
 ok('and reports how much is on the machine', st.cachedBytes > 500000, `${(st.cachedBytes / 1e6).toFixed(1)} MB`);
-ok('the cache is versioned by content', /^tessercad-[0-9a-f]{12}$/.test(st.version || ''), st.version);
+ok('the cache is versioned by content', /^tessercadina-[0-9a-f]{12}$/.test(st.version || ''), st.version);
 
 /* ---- THE claim: it opens with the network off ---- */
 await page.waitForTimeout(1200);

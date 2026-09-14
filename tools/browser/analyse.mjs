@@ -45,7 +45,7 @@ await page.evaluate(async () => {
   window.__dl = [];
   URL.createObjectURL = (b) => { window.__lastBlob = b; return 'blob:stub'; };
   HTMLAnchorElement.prototype.click = function () { window.__dl.push(this.download); };
-  localStorage.removeItem('tessercad.vcs.v1');
+  localStorage.removeItem('tessercadina.vcs.v1');
 });
 
 /* ------------------------------------------------- 1. exact interference */
