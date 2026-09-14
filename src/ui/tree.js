@@ -157,7 +157,7 @@ function renderFeatures(app, host) {
   if (app.isolated) {
     host.appendChild(el('div', { class: 'banner info', style: { marginTop: '8px' } }, [
       icon('target', { size: 15 }),
-      el('div', {}, [`Isolation is on — ${app.isolated.size} shown. `, el('a', { href: '#', text: 'Exit', onclick: (e) => { e.preventDefault(); app.isolate(); } })]),
+      el('div', {}, [tfmt('Isolation is on — {size} shown. ', { size: app.isolated.size }), el('a', { href: '#', text: 'Exit', onclick: (e) => { e.preventDefault(); app.isolate(); } })]),
     ]));
   }
 }

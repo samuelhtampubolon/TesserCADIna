@@ -65,7 +65,7 @@ function vecRow(label, values, scope, onCommit, unit) {
   const box = el('div', { class: 'triplet-axis' });
   ['X', 'Y', 'Z'].forEach((ax, i) => {
     const w = exprInput(values[i], scope, (v) => { const next = [...values]; next[i] = v; onCommit(next); }, { unit, hint: false });
-    w.firstChild.title = `${label} ${ax} — accepts an expression`;
+    w.firstChild.title = tfmt('{label} {ax} — accepts an expression', { label, ax });
     box.appendChild(el('div', { class: 'axis-field' }, [
       el('span', { class: 'axis-label', dataset: { axis: ax }, text: ax }),
       w,

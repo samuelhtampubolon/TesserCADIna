@@ -141,7 +141,7 @@ check('tiny-feature', (ctx, add) => {
       featureId: b.feature.id,
       title: tfmt('{name} is {min}mm at its thinnest', { name: b.feature.name, min: fmt(min) }),
       detail: `${p.label} holds about ${ctx.limits.minFeature}mm.`,
-      why: `Below the process minimum the feature either disappears or arrives out of tolerance. This measures the body's overall bounding box, not its true minimum wall, so treat it as a prompt to look rather than a verdict.`,
+      why: 'Below the process minimum the feature either disappears or arrives out of tolerance. This measures the body’s overall bounding box, not its true minimum wall, so treat it as a prompt to look rather than a verdict.',
     });
   }
 });
@@ -236,7 +236,7 @@ check('interference', (ctx, add) => {
       featureId: c.a.feature.id,
       title: tfmt('{a} and {b} share {vol} mm³', { a: c.a.feature.name, b: c.b.feature.name, vol: fmt(c.volume) }),
       detail: tfmt('They genuinely intersect, centred at {x}, {y}, {z}', { x: fmt(c.at.x), y: fmt(c.at.y), z: fmt(c.at.z) }) +
-        (c.fraction > 0 ? ` — ${(c.fraction * 100).toFixed(1)}% of the smaller body.` : '.'),
+        (c.fraction > 0 ? tfmt(' — {p1}% of the smaller body.', { p1: (c.fraction * 100).toFixed(1) }) : '.'),
       why: 'Two solids occupying the same space is either an assembly clash or a boolean that was never applied. This is the measured intersection volume, not a bounding-box guess, so it is a real overlap.',
       fix: {
         label: 'Union them into one body',
@@ -400,7 +400,10 @@ function diagnoseFailure(f, message, ctx) {
     const suppressed = f.inputs.map(id => ctx.doc.features.find(x => x.id === id)).filter(x => x && x.suppressed);
     if (suppressed.length) {
       return {
-        why: `Its input ${suppressed.map(x => `“${x.name}”`).join(' and ')} ${suppressed.length === 1 ? 'is' : 'are'} suppressed, so this feature has nothing to work on. The intent is intact; the input is just switched off.`,
+        why: tfmt(suppressed.length === 1
+          ? 'Its input {names} is suppressed, so this feature has nothing to work on. The intent is intact; the input is just switched off.'
+          : 'Its inputs {names} are suppressed, so this feature has nothing to work on. The intent is intact; the input is just switched off.',
+        { names: suppressed.map(x => `“${x.name}”`).join(t(' and ')) }),
         fix: {
           label: `Unsuppress ${suppressed.map(x => x.name).join(', ')}`,
           apply: (store) => store.edit('Restore suppressed input', (d) => {

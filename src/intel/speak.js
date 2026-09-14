@@ -24,6 +24,7 @@
  * sentence at a time. Both end at the same place, a feature you can drag.
  */
 import { CATALOG, MATERIALS, makeFeature } from '../core/doc.js';
+import { tfmt } from '../core/i18n.js';
 
 /* -------------------------------------------------------------- vocabulary */
 
@@ -244,7 +245,7 @@ export function parse(text, { context = {} } = {}) {
   if (!type) {
     return {
       ok: false, plan: null, understood: [], unknown: [],
-      why: `Tidak ada bentuk di sana. Ini membaca kosa kata, bukan bahasa bebas, jadi perlu salah satu dari: ${Object.values(SHAPES).map(w => w[0]).join(', ')}, atau sebuah lubang untuk dipotong.`,
+      why: tfmt('Tidak ada bentuk di sana. Ini membaca kosa kata, bukan bahasa bebas, jadi perlu salah satu dari: {p1}, atau sebuah lubang untuk dipotong.', { p1: Object.values(SHAPES).map(w => w[0]).join(', ') }),
     };
   }
 
@@ -408,7 +409,7 @@ export function parse(text, { context = {} } = {}) {
     } else {
       // For a round shape a two-number run reads as diameter then length.
       setDia(v[0]); plan.params.h = v[1];
-      understood.push(`diameter ${v[0]} mm, panjang ${v[1]} mm`);
+      understood.push(tfmt('diameter {p1} mm, panjang {p2} mm', { p1: v[0], p2: v[1] }));
     }
   }
 
@@ -540,11 +541,11 @@ export function compile(plan, { doc = null, target = null } = {}) {
     const pname = named(
       `${plan.thread.tapped ? 'tap' : 'clear'}_m${String(plan.thread.size).replace('.', '_')}`,
       plan.thread.dia,
-      `M${plan.thread.size} ${plan.thread.tapped ? 'bor tap' : 'clearance'}, ISO 273 seri sedang`,
+      tfmt('M{size} {p1}, ISO 273 seri sedang', { size: plan.thread.size, p1: plan.thread.tapped ? 'bor tap' : 'clearance' }),
     );
     body.params.r = `${pname} / 2`;
     body.name = `Lubang ${plan.thread.tapped ? 'tap' : 'clearance'} M${plan.thread.size}`;
-    notes.push(`Diameter lubang adalah parameter ${pname}, jadi mengubah ukuran bautnya menggerakkan setiap lubang yang memakainya.`);
+    notes.push(tfmt('Diameter lubang adalah parameter {pname}, jadi mengubah ukuran bautnya menggerakkan setiap lubang yang memakainya.', { pname }));
   }
 
   // A cut needs to go through something, so make it longer than it is wide
@@ -576,7 +577,7 @@ export function compile(plan, { doc = null, target = null } = {}) {
       pat.inputs = [body.id];
       features.push(pat);
       head = pat;
-      if (!plan.spacing) notes.push(`Jarak tidak disebut, jadi mereka berjarak ${step} mm.`);
+      if (!plan.spacing) notes.push(tfmt('Jarak tidak disebut, jadi mereka berjarak {step} mm.', { step }));
     }
   }
 

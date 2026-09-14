@@ -8,6 +8,7 @@
  */
 import { bus, T } from '../core/bus.js';
 import { store, uid, UNITS, toDisplay } from '../core/doc.js';
+import { tfmt } from '../core/i18n.js';
 import { entityToPath } from '../core/geometry.js';
 
 const TAU = Math.PI * 2;
@@ -1144,8 +1145,8 @@ const TOOL_PROMPTS = {
   arc: (n) => n === 0 ? 'Pick the arc start' : n === 1 ? 'Pick a point along the arc' : 'Pick the arc end',
   point: 'Click to place a node',
   text: 'Click to place text',
-  dimLinear: (n) => n < 2 ? `Pick measurement point ${n + 1}` : 'Pick the dimension line position',
-  dimAligned: (n) => n < 2 ? `Pick measurement point ${n + 1}` : 'Pick the dimension line position',
+  dimLinear: (n) => n < 2 ? tfmt('Pick measurement point {n}', { n: n + 1 }) : 'Pick the dimension line position',
+  dimAligned: (n) => n < 2 ? tfmt('Pick measurement point {n}', { n: n + 1 }) : 'Pick the dimension line position',
   dimRadial: 'Click a circle or arc',
   dimAngular: (n) => n === 0 ? 'Pick the vertex' : n === 1 ? 'Pick the first leg' : 'Pick the second leg',
   offset: (n) => n ? 'Click the side to offset towards' : 'Pick an object to offset',

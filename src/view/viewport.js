@@ -12,6 +12,7 @@ import { RoomEnvironment } from 'three/addons/RoomEnvironment.js';
 import { bus, T } from '../core/bus.js';
 import { store, MATERIALS } from '../core/doc.js';
 import { featureEdges } from '../core/geometry.js';
+import { tfmt } from '../core/i18n.js';
 
 const Z = new THREE.Vector3(0, 0, 1);
 
@@ -519,7 +520,7 @@ export class Viewport {
     this.measurePts = [];
     this._clearMeasure();
     this.renderer.domElement.style.cursor = mode ? 'crosshair' : '';
-    bus.emit(T.STATUS, mode ? `Measure ${mode}: click points on the model (Esc to finish)` : 'Ready');
+    bus.emit(T.STATUS, mode ? tfmt('Measure {mode}: click points on the model (Esc to finish)', { mode }) : 'Ready');
   }
 
   _measureClick(hit) {

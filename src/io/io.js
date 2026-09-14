@@ -209,7 +209,7 @@ export async function importMeshFile(file) {
     const obj = new OBJLoader().parse(text);
     obj.traverse(o => { if (o.isMesh) { const g = o.geometry.clone(); g.applyMatrix4(o.matrixWorld); geometries.push(g); } });
   } else {
-    throw new Error(`Unsupported mesh format “.${ext}”`);
+    throw new Error(tfmt('Unsupported mesh format “.{ext}”', { ext }));
   }
   if (!geometries.length) throw new Error('No geometry found in that file');
 

@@ -23,6 +23,7 @@ const root = join(here, '..', '..');
 const src = join(root, 'src');
 
 const { ID, t, tfmt } = await import('../../src/core/i18n.js');
+const { scan } = await import('../lex.mjs');
 
 let fails = 0;
 const ok = (name, cond, extra = '') => { if (!cond) fails++; console.log(`${cond ? 'ok  ' : 'FAIL'} ${name}${extra ? '  - ' + extra : ''}`); };
@@ -58,16 +59,51 @@ const EXEMPT = new Map([
   ['Nylon 12', 'polymer grade designation'],
   ['Resin (SLA/DLP)', 'process name, identical in Indonesian'],
   ['Normal (±3σ)', 'identical in Indonesian'],
-  ['ISO/SNI: tampilan dari atas digambar di bawah tampilan depan, tampilan kanan di sebelah kirinya.',
-    'already Indonesian at the source'],
-  ['ASME: tampilan dari atas digambar di atas tampilan depan, tampilan kanan di sebelah kanannya.',
-    'already Indonesian at the source'],
-  ['Tiga hal yang perlu diketahui', 'already Indonesian at the source'],
-  ['Batas yang jujur', 'already Indonesian at the source'],
+  ['(min-width: 700px) and (max-width: 1279px) and (min-height: 461px)', 'a CSS media query, not language'],
+  ['property uchar red', 'a PLY header token, written into an exported file'],
+  ['property uchar green', 'a PLY header token'],
+  ['property uchar blue', 'a PLY header token'],
+  ['property list uchar int vertex_indices', 'a PLY header token'],
+  ['[bus] handler for "${…}" threw', 'a console warning for whoever is debugging the event bus'],
+  ['Boolean skipped: ${…}k triangles exceeds the ${…}k budget.',
+    'raised inside the boolean kernel, which the workers load and the dictionary is deliberately kept out of; rebuild.js phrases it (see readableError)'],
   ['Jelajahi templat', 'already Indonesian at the source'],
   ['Pintasan', 'already Indonesian at the source'],
   ['Mulai memodel', 'already Indonesian at the source'],
 ]);
+
+/**
+ * Written in Indonesian where it stands, and so needing no entry.
+ *
+ * Most of this application's strings are inherited from TesserCAD and are
+ * English keys that the dictionary answers. Some were written here, in
+ * Indonesian, and translating those would mean inventing an English original
+ * to translate back. So the rule the suite enforces is not "every string is in
+ * the dictionary" but the one that matters: **no English prose reaches a user
+ * without a translation**.
+ *
+ * One-and-two-letter markers are left out: `di` and `ke` are ordinary
+ * Indonesian words and nothing in English, but they are too short to risk
+ * against acronyms and identifiers.
+ */
+const INDONESIAN = new RegExp('\\b(' + [
+  // function words
+  'yang', 'tidak', 'dan', 'dengan', 'untuk', 'dari', 'ini', 'itu', 'adalah',
+  'pada', 'bisa', 'akan', 'sudah', 'atau', 'jadi', 'lebih', 'tanpa', 'setiap',
+  'semua', 'sebuah', 'belum', 'sedang', 'kembali', 'hanya', 'ada', 'anda',
+  'saat', 'agar', 'bukan', 'masih', 'juga', 'sendiri', 'dalam', 'oleh',
+  'selamat', 'datang', 'sepenuhnya', 'diunggah',
+  'seperti', 'karena', 'tetapi', 'saja', 'dulu', 'sekali', 'kali', 'tiap',
+  // content words with no English homograph
+  'panjang', 'lebar', 'tinggi', 'tebal', 'kedalaman', 'jarak', 'jumlah',
+  'ukuran', 'titik', 'garis', 'bidang', 'muka', 'sisi', 'lubang', 'baut',
+  'pelat', 'kotak', 'silinder', 'tabung', 'bola', 'potong', 'gambar',
+  'berkas', 'dokumen', 'versi', 'cabang', 'konflik', 'satuan', 'nilai',
+  'angka', 'catatan', 'peramban', 'pengaturan', 'perintah', 'fitur',
+  // verbs, which in Indonesian carry their affixes
+  'dipilih', 'disimpan', 'dihapus', 'ditambahkan', 'dibangun', 'diterapkan',
+  'berjalan', 'memakai', 'membuat', 'menyimpan', 'menghapus', 'memilih',
+].join('|') + ')\\b', 'i');
 
 /* ------------------------------------------------------------------ sweep */
 
@@ -105,7 +141,11 @@ const SITES = [
 
 const unescape = (s) => s.replace(/\\(['"\\])/g, '$1').replace(/\\n/g, '\n');
 
-const files = walk(src).filter(f => !f.endsWith('i18n.js'));
+// The dictionary is not a source of untranslated strings; it is the answer to
+// them. Its Indonesian values carry English loanwords ("bill of materials")
+// and its keys are English by definition.
+const TABLES = ['i18n.js', 'lang-interface.js', 'lang-prose.js'];
+const files = walk(src).filter(f => !TABLES.some(name => f.endsWith(name)));
 const found = new Map();       // string -> Set of "file (site)"
 
 for (const file of files) {
@@ -118,6 +158,7 @@ for (const file of files) {
       if (raw === undefined) continue;
       const s = unescape(raw);
       if (!s.trim() || !/[A-Za-z]/.test(s)) continue;
+      if (INDONESIAN.test(s)) continue;          // written here, in Indonesian
       if (!found.has(s)) found.set(s, new Set());
       found.get(s).add(`${relative(root, file)} (${site})`);
     }
@@ -139,9 +180,75 @@ const covered = found.size - untranslated.length;
 const kept = Object.entries(ID).filter(([k, v]) => k === v).length;
 console.log(`     ${covered} of ${found.size} user-visible strings covered · ${Object.keys(ID).length} dictionary entries, ${kept} of them CAD terms held in English · ${EXEMPT.size} exempt`);
 
+/* ------------------------------------- nothing reaches a user around the table */
+
+/**
+ * Two ways a string gets past the sweep above, both of which happened.
+ *
+ * A template literal is never translated: `t()` matches exact text, and
+ * `${n} features failed to build` is a different string every time. And a
+ * sentence written as a plain literal anywhere in a module reaches a user
+ * through paths the attribute sweep does not model — a thrown error, a
+ * finding's detail, a note pushed onto a list.
+ *
+ * So the whole source is read with a real lexer and every English sentence in
+ * it has to be accounted for, wherever it sits.
+ */
+const ENGLISH_SENTENCE = /\b(the|an|is|are|to|of|and|not|no|you|your|it|this|that|with|from|for|by|as|has|have|will|can|cannot|does|every|each|which|what|there|their|its|all|any|some|more|than|then|so|but|if|into|only|also|just|nothing|needs|need|must|should|because|while|both|other|same|at|on|in|be|was|were|had)\b/i;
+
+/**
+ * Words enough to be a phrase rather than an identifier or a format string.
+ *
+ * Two words only count with an English function word beside them, because
+ * "Move X" and "bolt_r" are not sentences. Three or more count on their own:
+ * "Known types:" carries no function word at all, and that is how one error
+ * message stayed English through two passes of this file.
+ */
+const looksLikeProse = (s) => {
+  const words = s.trim().split(/\s+/).filter(w => /^[A-Za-z]{2,}$/.test(w));
+  return words.length >= 3 || (words.length === 2 && ENGLISH_SENTENCE.test(s));
+};
+
+const needsTranslation = (s) => looksLikeProse(s) && !INDONESIAN.test(s);
+
+const strayProse = [];
+const strayTemplates = [];
+const allStrings = new Set();
+const allTemplates = new Set();
+for (const file of files) {
+  // CSS class lists are three short lowercase words and read exactly like a
+  // phrase to any heuristic. They are not language, so they are taken out
+  // before the sweep rather than listed one by one as exemptions.
+  const source = readFileSync(file, 'utf8').replace(/\bclass(?:Name)?\s*:\s*'(?:[^'\\]|\\.)*'/g, 'class: 0');
+  const { strings, templates } = scan(source);
+  const where = relative(root, file);
+  for (const { value } of strings) {
+    if (!needsTranslation(value)) continue;
+    allStrings.add(value);
+    if (Object.prototype.hasOwnProperty.call(ID, value) || EXEMPT.has(value)) continue;
+    strayProse.push(`${where}: ${JSON.stringify(value)}`);
+  }
+  for (const { chunks, raw } of templates) {
+    const text = chunks.join(' ');
+    if (!needsTranslation(text)) continue;
+    allTemplates.add(raw);
+    if (EXEMPT.has(raw)) continue;
+    strayTemplates.push(`${where}: \`${raw.replace(/\n/g, '\\n').slice(0, 80)}\``);
+  }
+}
+
+ok('no English sentence sits in the source outside the dictionary',
+  strayProse.length === 0, strayProse.slice(0, 8).join('\n       '));
+
+ok('and no user-visible sentence is assembled with a template literal, which t() can never match',
+  strayTemplates.length === 0, strayTemplates.slice(0, 8).join('\n       '));
+
 /* ---------------------------------------- the allowlist stays honest too */
 
-const stale = [...EXEMPT.keys()].filter(s => !found.has(s));
+// Everything the source actually contains, from either sweep, so an exemption
+// for a template or a stray sentence is not reported as stale.
+const inSource = new Set([...found.keys(), ...allStrings, ...allTemplates]);
+const stale = [...EXEMPT.keys()].filter(s => !inSource.has(s));
 ok('nothing sits in the exempt list that the source no longer contains',
   stale.length === 0, stale.map(s => JSON.stringify(s)).join(', '));
 

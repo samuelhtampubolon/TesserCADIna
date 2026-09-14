@@ -168,15 +168,15 @@ ok('and the document still imports so the user can rename', !!dup.doc);
 
 /* ---- error paths ---- */
 let bad = D.importIntent('{not json');
-ok('invalid JSON is reported', bad.errors[0].startsWith('Not valid JSON'));
+ok('invalid JSON is reported', bad.errors[0].startsWith('Bukan JSON yang sah'));
 bad = D.importIntent({ format: 'something.else', features: [] });
 ok('another format is refused by name', /"something.else"/.test(bad.errors[0]), bad.errors[0]);
 bad = D.importIntent({ format: 'tessercad.design-intent' });
 ok('a file with no features is refused', /No feature list/.test(bad.errors[0]));
 bad = D.importIntent({ format: 'tessercad.design-intent', features: [{ name: 'X', type: 'flange' }] });
-ok('an unknown feature type is reported with its name', /unknown type "flange"/.test(bad.errors[0]), bad.errors[0]);
+ok('an unknown feature type is reported with its name', /bertipe "flange" yang tidak dikenal/.test(bad.errors[0]), bad.errors[0]);
 bad = D.importIntent({ format: 'tessercad.design-intent', features: [{ name: 'A', type: 'box', consumes: ['Nope'] }] });
-ok('a dangling consumes reference is an error', /does not define/.test(bad.errors[0]), bad.errors[0]);
+ok('a dangling consumes reference is an error', /tidak didefinisikan berkas ini/.test(bad.errors[0]), bad.errors[0]);
 let fwd = D.importIntent({ format: 'tessercad.design-intent', version: 9, document: { name: 'Future' }, features: [] });
 ok('a newer format version imports with a note about what was ignored',
   !!fwd.doc && fwd.notes.some(n => /format intent yang lebih baru/.test(n)), fwd.notes.join('; '));

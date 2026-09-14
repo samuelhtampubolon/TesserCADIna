@@ -214,7 +214,7 @@ const impossible = T.emptyStack({ lower: 0, upper: 0.002 });
 impossible.links = [T.makeLink({ nominal: 100, plus: 0, minus: 0 }), T.makeLink({ nominal: -99.999, plus: 0, minus: 0 })];
 alloc = T.allocate(impossible, { method: 'equal', target: 1.33, floor: 0.005 });
 ok('an unreachable requirement is flagged, not silently rounded',
-  alloc.every(x => x.tight && x.note.includes('floor')), alloc[0].note.slice(0, 50));
+  alloc.every(x => x.tight && x.note.includes('batas bawah')), alloc[0].note.slice(0, 50));
 const misses = T.allocate(T.emptyStack({ lower: 5, upper: 6, links: [T.makeLink({ nominal: 1 })] }), {});
 ok('a chain whose nominal misses the spec says fix the nominals first',
   misses[0].tol === null && /nominals/.test(misses[0].note));

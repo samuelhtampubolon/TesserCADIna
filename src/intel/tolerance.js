@@ -514,7 +514,7 @@ export function allocate(stack, { method = 'proportional', target = 1.33, floor 
       id: l.id, label: l.label, nominal: l.nominal,
       tol: Math.max(floor, tol),
       tight: tol < floor,
-      note: tol < floor ? `Needs ±${tol.toFixed(4)}mm, below the ±${floor}mm floor. Rethink the chain rather than the tolerance.` : '',
+      note: tol < floor ? tfmt('Needs ±{p1}mm, below the ±{floor}mm floor. Rethink the chain rather than the tolerance.', { p1: tol.toFixed(4), floor }) : '',
     };
   });
 }
@@ -565,8 +565,8 @@ export function stackSummary(stack) {
   return {
     name: stack.name,
     requirement: stack.requirement,
-    spec: `${a.lower.toFixed(3)} to ${a.upper.toFixed(3)} mm`,
-    worstCase: `${a.worst.min.toFixed(3)} to ${a.worst.max.toFixed(3)} mm`,
+    spec: tfmt('{p1} to {p2} mm', { p1: a.lower.toFixed(3), p2: a.upper.toFixed(3) }),
+    worstCase: tfmt('{p1} to {p2} mm', { p1: a.worst.min.toFixed(3), p2: a.worst.max.toFixed(3) }),
     worstCaseFits: a.worst.fits,
     cp: a.capability.cp, cpk: a.capability.cpk,
     ppm: a.capability.ppm,

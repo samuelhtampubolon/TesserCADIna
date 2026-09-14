@@ -25,6 +25,7 @@
  * part nobody can promise, so the function returns the assumption alongside
  * the number instead of hiding it.
  */
+import { tfmt } from '../core/i18n.js';
 
 /**
  * Metric coarse threads.
@@ -113,7 +114,7 @@ export function spec(size, { cls = '8.8', length = null, fit = 'medium', lubrica
     proofLoadN: Math.round(proofLoad),
     preloadN: Math.round(preload),
     torqueNm: Math.round(torque * 10) / 10,
-    torqueBasis: `T = K·F·d with K = ${K} (${lubricated ? 'lubricated' : 'plain dry thread'}), F = 90% of proof load. Published torque tables are this same formula; the friction coefficient is the part nobody can promise.`,
+    torqueBasis: tfmt('T = K·F·d with K = {K} ({p1}), F = 90% of proof load. Published torque tables are this same formula; the friction coefficient is the part nobody can promise.', { K, p1: lubricated ? 'lubricated' : 'plain dry thread' }),
     clearanceHole: m.clear[FITS[fit] ?? 1],
     clearanceFit: fit,
     tappingDrill: m.tap,
@@ -193,7 +194,7 @@ export function bomRow(size, { cls = '8.8', length = 20, qty = 1 } = {}) {
   if (!s) return null;
   return {
     item: s.designation,
-    description: `Socket head cap screw ${size}×${length}, class ${cls}, ISO 4762`,
+    description: tfmt('Socket head cap screw {size}×{length}, class {cls}, ISO 4762', { size, length, cls }),
     qty,
     diameter: s.diameter,
     pitch: s.pitch,

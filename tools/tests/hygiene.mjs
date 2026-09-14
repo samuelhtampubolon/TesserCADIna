@@ -113,7 +113,7 @@ H.inspect(store.doc).issues.find(i => i.id === 'far-origin').fix.apply(store);
 ok('a position written as an expression is not rewritten',
   store.doc.features[0].transform.pos[0] === 'offset', String(store.doc.features[0].transform.pos[0]));
 ok('and the note says how many were left alone',
-  /expressions/.test(store.doc.meta.notes), store.doc.meta.notes);
+  /ekspresi/.test(store.doc.meta.notes), store.doc.meta.notes);
 
 /* ---- duplicate payloads ---- */
 const dup = newDocument('Dup'); dup.params = [];

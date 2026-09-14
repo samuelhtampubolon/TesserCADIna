@@ -356,7 +356,7 @@ export function deviationVerdict({
     return { grade: 'tessellation', severity: 'ok', label: tfmt('Peak {mm}mm on {percent}% of samples, spread thinly: consistent with a coarser tessellation of the same shape.', { mm: max.toFixed(3), percent: (outsideFraction * 100).toFixed(1) }) };
   }
   if (rel < 0.02) {
-    return { grade: 'detail', severity: 'warn', label: `Peak ${max.toFixed(3)}mm. Something small differs: a fillet, a chamfer or a hole size.` };
+    return { grade: 'detail', severity: 'warn', label: tfmt('Peak {p1}mm. Something small differs: a fillet, a chamfer or a hole size.', { p1: max.toFixed(3) }) };
   }
   return { grade: 'different', severity: 'block', label: tfmt('Peak {mm}mm, {percent}% of the part size. These are different shapes.', { mm: max.toFixed(3), percent: (rel * 100).toFixed(1) }) };
 }
@@ -397,11 +397,11 @@ export function importIntent(json) {
   const errors = [];
   let data = json;
   if (typeof json === 'string') {
-    try { data = JSON.parse(json); } catch (e) { return { doc: null, errors: [`Not valid JSON: ${e.message}`], notes }; }
+    try { data = JSON.parse(json); } catch (e) { return { doc: null, errors: [tfmt('Not valid JSON: {message}', { message: e.message })], notes }; }
   }
   if (!data || typeof data !== 'object') return { doc: null, errors: ['Not a design-intent file.'], notes };
   if (data.format && data.format !== 'tessercad.design-intent') {
-    return { doc: null, errors: [`This is a "${data.format}" file, not a design-intent file.`], notes };
+    return { doc: null, errors: [tfmt('This is a "{format}" file, not a design-intent file.', { format: data.format })], notes };
   }
   if (!Array.isArray(data.features)) return { doc: null, errors: ['No feature list in this file.'], notes };
 
@@ -422,7 +422,7 @@ export function importIntent(json) {
   const idOfName = new Map();
   doc.features = data.features.map((f, i) => {
     const type = CATALOG[f.type] ? f.type : null;
-    if (!type) { errors.push(`Feature "${f.name}" has unknown type "${f.type}".`); return null; }
+    if (!type) { errors.push(tfmt('Feature "{name}" has unknown type "{type}".', { name: f.name, type: f.type })); return null; }
     const made = makeFeature(type, { name: f.name || CATALOG[type].label });
     made.id = `fi${i}`;
     made.params = { ...made.params, ...(f.parameters || {}) };
@@ -457,7 +457,7 @@ export function importIntent(json) {
         notes.push(tfmt('"{feature}" consumes "{name}", and more than one feature has that name. The first was used.', { feature: f.name, name }));
       }
       const id = idOfName.get(name);
-      if (!id) errors.push(`"${f.name}" consumes "${name}", which this file does not define.`);
+      if (!id) errors.push(tfmt('"{name}" consumes "{p1}", which this file does not define.', { name: f.name, p1: name }));
       return id;
     }).filter(Boolean);
   });
@@ -485,13 +485,13 @@ export function intentRoundTrip(intent) {
   if ((src.parameters || []).length !== doc.params.length) differences.push('Parameter count changed.');
   (src.parameters || []).forEach((p, i) => {
     const q = doc.params[i];
-    if (!q) { differences.push(`Parameter ${p.name} was lost.`); return; }
+    if (!q) { differences.push(tfmt('Parameter {name} was lost.', { name: p.name })); return; }
     if (q.name !== p.name) differences.push(`Parameter ${i}: ${p.name} became ${q.name}.`);
     if (String(q.value) !== String(p.expression ?? p.resolved)) differences.push(`Parameter ${p.name}: ${p.expression} became ${q.value}.`);
   });
   (src.features || []).forEach((f, i) => {
     const g = doc.features[i];
-    if (!g) { differences.push(`Feature ${f.name} was lost.`); return; }
+    if (!g) { differences.push(tfmt('Feature {name} was lost.', { name: f.name })); return; }
     if (g.name !== f.name) differences.push(`Feature ${i}: ${f.name} became ${g.name}.`);
     if (g.type !== f.type) differences.push(`${f.name}: type ${f.type} became ${g.type}.`);
     for (const [k, v] of Object.entries(f.parameters || {})) {
@@ -509,7 +509,7 @@ export function deviationSummary(map) {
   if (!map?.ok) return { ok: false, line: map?.reason || 'No comparison.' };
   return {
     ok: true,
-    line: `${map.samples} points sampled: peak ${map.max.toFixed(3)}mm, RMS ${map.rms.toFixed(3)}mm, 95% within ${map.p95.toFixed(3)}mm. ${map.verdict.label}`,
+    line: tfmt('{samples} points sampled: peak {p1}mm, RMS {p2}mm, 95% within {p3}mm. {label}', { samples: map.samples, p1: map.max.toFixed(3), p2: map.rms.toFixed(3), p3: map.p95.toFixed(3), label: map.verdict.label }),
     severity: map.verdict.severity,
     grade: map.verdict.grade,
   };

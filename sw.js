@@ -20,7 +20,7 @@
  * is worse than one that is a deploy behind, and the fetch below still
  * refreshes the cache in the background, so the next open is current.
  */
-const VERSION = 'tessercadina-cd89ab52d932';
+const VERSION = 'tessercadina-e43b9fbffbef';
 const FILES = [
   "assets/favicon.svg",
   "index.html",
@@ -34,6 +34,8 @@ const FILES = [
   "src/core/expr.js",
   "src/core/geometry.js",
   "src/core/i18n.js",
+  "src/core/lang-interface.js",
+  "src/core/lang-prose.js",
   "src/core/rebuild.js",
   "src/draft/draft.js",
   "src/draft/dxf.js",

@@ -299,8 +299,8 @@ function recentreFix(doc, reference = null) {
             else skipped++;
           }
         }
-        const note = `Design origin offset from the original coordinates: ${off.join(', ')} mm.` +
-          (skipped ? ` ${skipped} coordinate${skipped === 1 ? '' : 's'} left alone because they are expressions.` : '');
+        const note = tfmt('Design origin offset from the original coordinates: {p1} mm.', { p1: off.join(', ') }) +
+          (skipped ? tfmt(' {skipped} coordinate left alone because they are expressions.', { skipped }) : '');
         d.meta.notes = d.meta.notes ? `${d.meta.notes}\n${note}` : note;
       });
     },
@@ -316,7 +316,7 @@ function recentreFix(doc, reference = null) {
  */
 function dedupFix(group) {
   return {
-    label: `Share one copy between ${group.length} bodies`,
+    label: tfmt('Share one copy between {count} bodies', { count: group.length }),
     apply: (store) => {
       store.edit('Share duplicate meshes', (d) => {
         const ids = new Set(group.map(f => f.id));

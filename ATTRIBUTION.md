@@ -217,13 +217,13 @@ enough to be argued with.
 ## 5. How to check any of this
 
 ```bash
-npm test                       # 892 checks, including the security suite
+npm test                       # 935 checks, including the security suite
 node tools/check-csp.mjs       # the policy's import-map hash is current
 grep -rniE "freecad|librecad|openscad|solvespace|brlcad|qcad|cadquery|blender|build123d|chili3d|meshlab|bforartists|dust3d" src/
 ```
 
-That last command returns **five lines**, and it returns them because the
-originality check in `tools/tests/architecture.mjs` asserts exactly which five,
+That last command returns **seven lines**, and it returns them because the
+originality check in `tools/tests/architecture.mjs` asserts exactly which seven,
 so the claim on this page fails the build rather than quietly going stale:
 
 | File | What it is |
@@ -231,9 +231,11 @@ so the claim on this page fails the build rather than quietly going stale:
 | `src/ui/operators.js:9` | A header comment crediting Blender for modal transforms |
 | `src/intel/drawing.js:4` | A comment contrasting this approach with Blender's |
 | `src/intel/spec.js:4` | A comment arguing with OpenSCAD's premise |
-| `src/ui/commands.js:49`, `:347` | Two search keywords, so typing "blender" or "openscad" in the palette finds the glTF export and the text editor |
+| `src/ui/commands.js` (two lines) | Two search keywords, so typing "blender" or "openscad" in the palette finds the glTF export and the text editor |
+| `src/core/lang-prose.js` (two lines) | The Indonesian half of those same two keywords, so the palette answers either language |
 
-Three prose comments and two search keywords. No vendored code, no copied file,
+Three prose comments and two search keywords, each keyword in both languages.
+No vendored code, no copied file,
 no generated port, and not one line from any of the thirteen. The csg.js
 derivation is credited in `src/core/csg-core.js` and in section 1 above; it is
 not one of the thirteen.
