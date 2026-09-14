@@ -2,7 +2,9 @@
 
 **Studio CAD parametrik berbahasa Indonesia yang berjalan sepenuhnya di peramban.**
 Pemodelan solid 3D, drafting 2D, dan simulasi 4D (tiga dimensi plus waktu).
-Satuan metrik, gambar kerja sudut pertama ISO/SNI, lebih ringan dari TesserCAD.
+Satuan metrik, gambar kerja sudut pertama ISO/SNI. Unduhan desktopnya lebih
+ringan dari TesserCAD; salinan webnya membawa kamusnya sendiri, jadi sedikit
+lebih besar. Angkanya ada di bawah.
 
 ![MIT licence](https://img.shields.io/badge/licence-MIT-3da639)
 ![No build step](https://img.shields.io/badge/build-none-4c9fff)
@@ -25,11 +27,31 @@ Satuan metrik, gambar kerja sudut pertama ISO/SNI, lebih ringan dari TesserCAD.
 > Salinan web juga bekerja offline setelah dibuka: **Bantuan → Offline dan
 > kepemilikan** memasangnya, lalu jaringan boleh dimatikan.
 
-TesserCADIna adalah edisi Bahasa Indonesia yang lebih ringan dari
+TesserCADIna adalah edisi Bahasa Indonesia dari
 [TesserCAD](https://github.com/samuelhtampubolon/TesserCAD): mesin geometri, Boolean,
-command registry, Design Doctor, gambar kerja, toleransi, dan simulasi 4D yang sama
-(sekitar 85–95%), dengan antarmuka sepenuhnya Bahasa Indonesia kecuali istilah CAD
-yang sudah akrab (Extrude, Boolean, STL, Gizmo, Undo, Draft, Snap, Ortho, ISO, DXF).
+command registry, Design Doctor, gambar kerja, toleransi, dan simulasi 4D yang sama,
+dengan antarmuka sepenuhnya Bahasa Indonesia kecuali istilah CAD yang sudah akrab
+(Extrude, Boolean, STL, Gizmo, Undo, Draft, Snap, Ortho, ISO, DXF).
+
+### Seberapa dekat dengan TesserCAD, diukur bukan diklaim
+
+```bash
+node tools/parity.mjs ../TesserCAD      # butuh salinan TesserCAD di sebelahnya
+```
+
+| | |
+|---|---|
+| Perintah | **202 di sini, 202 di TesserCAD** — tidak ada satu pun yang hilang |
+| API modul | tidak ada ekspor TesserCAD yang absen di sini |
+| Sumber yang sama persis | **89,6%** (22.713 dari 25.355 baris) |
+| Yang baru atau berubah | 10,4% — hampir seluruhnya kamus dan i18n |
+| Unduhan web (gzip) | 0,60 MB di sini, 0,53 MB di TesserCAD (**+11,8%**) |
+| Unduhan desktop | lebih kecil: hanya locale `en-US` dan `id`, TesserCAD membawa semuanya |
+
+Jadi "lebih ringan" berlaku untuk `.exe`-nya, bukan untuk halaman webnya. Kamus
+1.938 baris itu harus ikut terkirim, dan itulah harga antarmuka yang benar-benar
+berbahasa Indonesia. Angka di tabel ini dihasilkan `tools/parity.mjs`, jadi siapa
+pun bisa memeriksanya sendiri.
 
 ## Yang ada di dalamnya
 

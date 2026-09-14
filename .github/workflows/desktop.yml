@@ -143,6 +143,34 @@ jobs:
         working-directory: desktop
         run: npm run dist
 
+      # The README promises the Windows download is around 80 MB and under 90,
+      # and that promise is the reason the locale packs are stripped in
+      # electron-builder.yml. Nothing was checking it. A dependency bump or a
+      # dropped `electronLanguages` key would have made the page wrong quietly,
+      # so the build fails instead. Windows only: the cap is a claim about the
+      # zip that page offers, and the Linux artefacts are not that file.
+      - name: The Windows download is the size the README promises
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          cap=$((90 * 1024 * 1024))
+          fail=0
+          shopt -s nullglob
+          for f in dist-desktop/*windows*.zip dist-desktop/*setup.exe; do
+            bytes=$(stat -c%s "$f")
+            printf '%-52s %6.1f MB\n' "$(basename "$f")" "$(echo "$bytes / 1048576" | bc -l)"
+            if [ "$bytes" -gt "$cap" ]; then
+              echo "   ^ over the 90 MB the README promises"
+              fail=1
+            fi
+          done
+          if [ "$fail" = 1 ]; then
+            echo
+            echo "Either bring the size back down or change what the README claims."
+            echo "The locale packs in desktop/electron-builder.yml are the lever."
+            exit 1
+          fi
+
       # A hash lets anyone confirm the file they downloaded is the file this
       # workflow produced. It is the only verification available without a
       # code-signing certificate, and it is worth more than a self-signed one.
@@ -171,7 +199,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: tessercad-${{ matrix.artifact }}
+          name: tessercadina-${{ matrix.artifact }}
           path: |
             dist-desktop/*.exe
             dist-desktop/*.zip
