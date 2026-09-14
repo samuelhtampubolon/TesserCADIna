@@ -319,6 +319,77 @@ confirm it.
 
 ---
 
+## The 1.1.0 audit
+
+A review of the whole product against the four questions that matter for a tool
+that claims your work stays on your machine: what it stores, what it sends,
+what it can reach on the machine it runs on, and whether it can lose your work.
+Three things came out of it that were worth changing. Each has a test, and each
+test was run against the old code first to confirm it fails there.
+
+### A symbolic link could leave the application directory
+
+`resolveSafely` in `desktop/protocol.cjs` is the only route from the renderer to
+the disk, and it was checking the **path** rather than the **file**.
+`path.resolve` collapses `..` but knows nothing about links, so a link sitting
+inside the application directory and pointing outside it passed the check and
+then served whatever it pointed at. Named `leak.png` it read as an ordinary
+asset and it satisfied the extension allowlist.
+
+Reaching it needed a link already inside the installed directory, so this was
+not remote: it is a containment property that did not hold, not a live path from
+a web page to your home directory. The check is now applied a second time to the
+resolved real path, on both sides, and `tools/tests/desktop.mjs` attacks it with
+a link to a file, a link named with an allowed extension, and a linked
+directory. A link that stays inside the tree is still served, because the
+property is containment and not a ban on links.
+
+### Autosave could fail while the interface said it had not
+
+`saveLocal` returns `false` when browser storage refuses the write, and the
+caller cleared the saved indicator regardless. Browser storage is a few
+megabytes and one imported mesh is larger than that, so a full quota is the
+ordinary case. The document stayed dirty, so the "you have unsaved changes"
+prompt on closing the tab still fired and no work was actually lost — but an
+indicator that reports success at the moment it stops writing is worse than no
+indicator. The indicator now follows the result, and the failure is reported
+once per run of failures rather than every few seconds.
+
+### The build could be reached through someone else's tag
+
+`softprops/action-gh-release` is the one third-party action here and it runs in
+the job that holds `contents: write`. It was pinned to `v2` — a name its owner
+can repoint at any time, which would have been fetched by the next release job.
+It is pinned to a commit now. `ci.yml` also declared no `permissions:` block at
+all, so it ran with whatever the repository default happened to be; it states
+`contents: read`, which is all it needs.
+
+The security suite now asserts both properties for every workflow, so neither
+can be undone quietly.
+
+### Checked and found sound
+
+Recorded because "we looked" is worth as much as what was found:
+
+- **Nothing leaves the machine.** Already asserted by the suite for the page;
+  the desktop shell additionally resolves every hostname to nothing
+  (`host-resolver-rules`), so the guarantee is that the program cannot reach the
+  network, not that its telemetry is switched off.
+- **The shop drawing escapes what it interpolates.** The part name, material and
+  author reach an SVG that is assigned with `innerHTML`; all of them pass
+  through `esc()`. Dimension labels are formatted numbers and library constants.
+- **The service worker is same-origin and scoped to this application's path**,
+  which matters because GitHub Pages serves this and TesserCAD from one host.
+- **Engineering results do not carry non-finite numbers.** A zero-area section
+  and an absurd bolt load were probed; neither produced `NaN` or `Infinity`
+  where a user would read a figure.
+- **Device access is denied twice.** WebUSB, Web Serial and WebHID reach
+  hardware through a chooser the permission handler does not sit in front of.
+  Electron cancels a chooser with no listener, so this was already closed; it is
+  now stated explicitly rather than resting on a default.
+
+---
+
 ## Dependencies
 
 Runtime: **one**, vendored. three.js r169, unmodified, MIT, with its licence at
@@ -341,7 +412,7 @@ depend on them at all.
 ## Verifying the whole claim
 
 ```bash
-npm test                          # 935 checks, 17 suites, ~4 seconds
+npm test                          # 944 checks, 17 suites, ~4 seconds
 node tools/tests/security.mjs     # the attacks, on their own
 node tools/tests/desktop.mjs      # the desktop surface
 node tools/check-csp.mjs          # the policy's hash is current

@@ -18,8 +18,8 @@ properties, and trails them decisively on another. Both lists are below.
 
 | | |
 |---|---|
-| Source | 25,301 lines across 54 modules, 89.6% of it shared line-for-line with TesserCAD |
-| Tests | 935 headless in 17 suites, 394 across 11 browser suites, 17 in the real desktop shell |
+| Source | 25,337 lines across 54 modules, 89.6% of it shared line-for-line with TesserCAD |
+| Tests | 944 headless in 17 suites, 394 across 11 browser suites, 17 in the real desktop shell |
 | Runtime dependencies | 1 (three.js, vendored, unmodified, 924 KB) |
 | Build step | None |
 | `npm test`, cold | 3.7 seconds, downloads nothing |
@@ -69,7 +69,7 @@ A Content-Security-Policy of `default-src 'none'` with a SHA-256-pinned import
 map, no `eval` or `Function` anywhere in the project, validation enforced at the
 document's trust boundary rather than in a widget, prototype pollution closed at
 every parse boundary, and a desktop shell that opens **no listening socket** and
-denies every Electron permission. 76 security checks run attacks, not
+denies every Electron permission. 80 security checks run attacks, not
 assertions, and the CSP is verified in a real browser with zero violations.
 
 Several of the thirteen have scripting engines that execute untrusted model
@@ -225,6 +225,6 @@ MIT-licensed source and is credited for it.
 ---
 
 ```bash
-npm test                            # 935 checks, 17 suites, 3.7 seconds
+npm test                            # 944 checks, 17 suites, 3.7 seconds
 node tools/tests/architecture.mjs   # includes the originality check above
 ```

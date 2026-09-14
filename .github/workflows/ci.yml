@@ -25,6 +25,13 @@ concurrency:
   group: tests-${{ github.event.pull_request.head.ref || github.ref_name }}
   cancel-in-progress: true
 
+# Least privilege, stated rather than inherited. With no block here the job
+# runs with whatever the repository's default happens to be, which is a setting
+# outside this file and can be widened without touching it. Nothing in this
+# workflow writes: it checks out the code and runs the suites.
+permissions:
+  contents: read
+
 jobs:
   headless:
     name: Headless suites

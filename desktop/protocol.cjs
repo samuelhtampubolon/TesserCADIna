@@ -84,6 +84,15 @@ const HEADERS = {
  * somehow resolved inside the tree cannot be read unless it is one of the
  * types the application actually ships. A `.pem` or a `.env` that found its
  * way into the directory is refused on the way out.
+ *
+ * And the check is applied twice: once to the requested path, and again to
+ * what that path really is on disk. `path.resolve` collapses `..` but knows
+ * nothing about symbolic links, so a link sitting inside the tree and pointing
+ * outside it passes a path-only check and then serves whatever it points at.
+ * A `.png` in `assets/` linked to a file in the user's home directory is a
+ * containment bypass that reads like an ordinary asset. The second check is on
+ * the resolved real path, which is the only form that answers "is the file I
+ * am about to open inside the tree", rather than "does the path look like it".
  */
 function resolveSafely(root, urlPath) {
   const base = path.resolve(root);
@@ -94,14 +103,31 @@ function resolveSafely(root, urlPath) {
 
   const rel = decoded === '/' || decoded === '' ? 'index.html' : decoded.replace(/^[/\\]+/, '');
   const full = path.resolve(base, rel);
-  if (full !== base && !full.startsWith(base + path.sep)) return null;
+  if (!within(base, full)) return null;
 
   if (!TYPES.has(path.extname(full).toLowerCase())) return null;
 
   let stat;
   try { stat = fs.statSync(full); } catch { return null; }
   if (!stat.isFile()) return null;
+
+  // Now the same question about the file rather than about the path. Both
+  // sides are resolved, because the tree itself can sit under a link: on macOS
+  // a temporary directory is reached through /tmp and lives in /private/tmp,
+  // and comparing one against the other would refuse every legitimate file.
+  let realBase, realFull;
+  try { realBase = fs.realpathSync(base); realFull = fs.realpathSync(full); }
+  catch { return null; }
+  if (!within(realBase, realFull)) return null;
+  // A link may also point at a name the allowlist would have refused.
+  if (!TYPES.has(path.extname(realFull).toLowerCase())) return null;
+
   return full;
+}
+
+/** Is `target` the directory `dir` itself, or something underneath it? */
+function within(dir, target) {
+  return target === dir || target.startsWith(dir + path.sep);
 }
 
 /**
@@ -148,4 +174,4 @@ function refuse() {
   });
 }
 
-module.exports = { SCHEME, HOST, ORIGIN, TYPES, HEADERS, resolveSafely, createHandler };
+module.exports = { SCHEME, HOST, ORIGIN, TYPES, HEADERS, resolveSafely, createHandler, within };

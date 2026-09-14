@@ -20,7 +20,7 @@ tepat untuk itu.
 | **Releases** | [github.com/samuelhtampubolon/TesserCADIna/releases](https://github.com/samuelhtampubolon/TesserCADIna/releases) |
 | **Tanpa unduhan** | Versi web adalah aplikasi yang sama dan tidak memasang apa pun |
 
-Di Windows, ambil **`.zip`** (`TesserCADIna-1.0.0-windows-x64.zip`) bukan installer.
+Di Windows, ambil **`.zip`** (`TesserCADIna-1.1.0-windows-x64.zip`) bukan installer.
 Ekstrak, jalankan `TesserCADIna.exe`. There is no macOS build.
 
 ## Membangun sendiri
