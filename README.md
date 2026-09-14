@@ -116,12 +116,47 @@ yang ikut terbungkus, build merah alih-alih halaman ini diam-diam jadi salah.
 
 ## Yang perlu Anda lakukan sendiri
 
-1. **GitHub Pages** — Settings → Pages → Source: GitHub Actions. Workflow tidak
-   bisa mengaktifkannya sendiri.
-2. **Rilis desktop** — buat tag `v1.1.0` (harus sama dengan `desktop/package.json`)
-   agar Actions membangun zip Windows/Linux. Tanda tangan kode Windows (sertifikat)
-   tidak disertakan; zip unsigned.
-3. **Tidak ada build macOS** — pakai versi web, atau bangun sendiri dari `desktop/`.
+Dua hal di bawah ini tidak bisa dilakukan sebuah workflow atas namanya sendiri.
+Keduanya sengaja begitu: menerbitkan sesuatu ke publik adalah keputusan pemilik
+repositori, bukan efek samping sebuah build.
+
+1. **GitHub Pages** — Settings → Pages → Source: **GitHub Actions**. Satu kali
+   saja, per repositori. Setelah itu setiap push ke `main` menerbitkan ulang
+   halamannya sendiri.
+
+2. **Rilis desktop** — halaman [Releases][rel] kosong sampai ada tag `v*`, dan
+   tag itulah yang menyuruh Actions membangun serta melampirkan berkasnya.
+   Nomor tag harus sama dengan `desktop/package.json`; workflow menolak tag yang
+   tidak cocok, karena nama setiap berkas diambil dari manifes, bukan dari tag.
+
+   Lewat peramban, tanpa baris perintah: **Releases → Draft a new release →
+   Choose a tag →** ketik `v1.1.0` **→ Create new tag: v1.1.0 on publish →**
+   Target: `main` **→ Publish release**. Build berjalan sekitar tiga menit, lalu
+   berkasnya menempel sendiri ke rilis itu.
+
+   Lewat baris perintah, yang juga memeriksa versi dan tag ganda lebih dulu:
+
+   ```bash
+   bash tools/release.sh --dry-run   # lihat apa yang akan ditandai
+   bash tools/release.sh             # tandai dan dorong
+   ```
+
+   Tanda tangan kode Windows (sertifikat) tidak disertakan, jadi SmartScreen
+   akan memperingatkan saat berkas pertama dijalankan. Yang tersedia sebagai
+   gantinya adalah SHA-256 di samping tiap berkas dan atestasi provenance
+   bertanda tangan — lihat [SECURITY.md](SECURITY.md).
+
+**Belum menandai, tapi butuh `.exe`-nya sekarang?** Setiap build menyimpan
+artefaknya di tab **Actions**: buka run **Desktop build** yang hijau, gulir ke
+**Artifacts**, ambil `tessercadina-windows`. Isinya sama persis dengan yang akan
+dilampirkan ke rilis (`TesserCADIna-1.1.0-setup.exe`,
+`TesserCADIna-1.1.0-windows-x64.zip`, dan `.sha256` masing-masing). Bedanya:
+artefak Actions hanya bisa diunduh sambil masuk ke akun GitHub, terbungkus satu
+lapis zip tambahan, dan dihapus otomatis setelah 90 hari. Rilis tidak.
+
+**Tidak ada build macOS** — pakai versi web, atau bangun sendiri dari `desktop/`.
+
+[rel]: https://github.com/samuelhtampubolon/TesserCADIna/releases
 
 ## Lisensi
 
