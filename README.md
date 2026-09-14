@@ -21,8 +21,9 @@ lebih besar. Angkanya ada di bawah.
 > — ambil **`.zip` Windows**, ekstrak, jalankan `TesserCADIna.exe`. Tidak ada installer,
 > tidak perlu hak administrator. Ada build Linux juga. **There is no macOS build**:
 > `.dmg` yang tidak ditandatangani ditolak Gatekeeper, jadi yang ditawarkan hanya
-> versi web dan zip Windows/Linux. Target ukuran exe/zip Windows: **sekitar 80 MB,
-> di bawah 90 MB** (Chromium locale hanya `en-US` dan `id`).
+> versi web dan zip Windows/Linux. Ukuran unduhan Windows, **terukur di CI**:
+> zip **135 MB**, installer NSIS **98 MB**. Itu berat Electron 44, bukan berat
+> aplikasinya — sumber aplikasi ini sendiri sekitar 2 MB.
 >
 > Salinan web juga bekerja offline setelah dibuka: **Bantuan → Offline dan
 > kepemilikan** memasangnya, lalu jaringan boleh dimatikan.
@@ -85,7 +86,7 @@ python3 -m http.server 8080
 
 Lalu buka `http://localhost:8080`. `npm test` menjalankan suite headless.
 
-## Build desktop (Windows zip ~80 MB)
+## Build desktop
 
 Dijalankan di GitHub Actions saat Anda menandai rilis `v*`, atau secara lokal:
 
@@ -96,7 +97,22 @@ npm run dist
 ```
 
 Artefak: `TesserCADIna-1.0.0-windows-x64.zip` dan installer NSIS per-pengguna.
-Locale Chromium selain Inggris dan Indonesia dibuang agar ukuran tetap di bawah 90 MB.
+Locale Chromium selain Inggris dan Indonesia dibuang, yang menghemat belasan MB.
+
+Ukuran itu diperiksa setiap build: langkah **The Windows download is the size the
+README promises** di `.github/workflows/desktop.yml` mencetak ukuran sebenarnya
+dan menggagalkan build kalau melewati batas. Batasnya adalah penjaga regresi di
+atas angka terukur sekarang, bukan target: kalau locale stripping lepas atau ada
+yang ikut terbungkus, build merah alih-alih halaman ini diam-diam jadi salah.
+
+> **Catatan jujur soal ukuran.** Halaman ini dulu menjanjikan zip "sekitar 80 MB,
+> di bawah 90 MB". Sampai langkah pengukuran di atas ada, tidak ada yang pernah
+> memeriksanya, dan ternyata tidak benar: Electron 44 saja sudah sebesar itu.
+> Menurunkannya sampai 90 MB bukan soal menyetel konfigurasi — perlu memilih
+> salah satu dari: format unduhan `.7z` (LZMA, sekitar 75 MB, tapi pengguna
+> butuh 7-Zip), `compression: maximum` untuk installer (mungkin cukup untuk
+> installer saja, tetapi LZMA solid kerap dicurigai antivirus), atau Electron
+> versi lama. Ketiganya punya harga, jadi belum dipilih.
 
 ## Yang perlu Anda lakukan sendiri
 
