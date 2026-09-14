@@ -153,17 +153,30 @@ jobs:
         if: runner.os == 'Windows'
         shell: bash
         run: |
+          # Integer arithmetic throughout. The Windows runner's bash is Git Bash,
+          # which ships no `bc`, and reaching for it failed this step rather
+          # than the artefact: the size it was meant to report never printed.
           cap=$((90 * 1024 * 1024))
           fail=0
+          found=0
           shopt -s nullglob
           for f in dist-desktop/*windows*.zip dist-desktop/*setup.exe; do
+            found=1
             bytes=$(stat -c%s "$f")
-            printf '%-52s %6.1f MB\n' "$(basename "$f")" "$(echo "$bytes / 1048576" | bc -l)"
+            printf '%-46s %4d.%02d MB\n' "$(basename "$f")" \
+              "$((bytes / 1048576))" "$(((bytes % 1048576) * 100 / 1048576))"
             if [ "$bytes" -gt "$cap" ]; then
               echo "   ^ over the 90 MB the README promises"
               fail=1
             fi
           done
+          # nullglob means no match is an empty loop, so without this the gate
+          # would pass loudest exactly when there was nothing to measure.
+          if [ "$found" = 0 ]; then
+            echo "No Windows artefact to measure. The packaging step should have produced one:"
+            ls -la dist-desktop || true
+            exit 1
+          fi
           if [ "$fail" = 1 ]; then
             echo
             echo "Either bring the size back down or change what the README claims."
