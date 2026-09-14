@@ -157,7 +157,7 @@ await page.evaluate(() => { const app = window.tesserCAD; app.select([window.M.d
 await page.waitForTimeout(600);
 const drawn = await page.evaluate(() => {
   const svg = document.querySelector('.modal .section-svg');
-  const caveat = [...document.querySelectorAll('.modal .banner')].some(b => /not finite element analysis/i.test(b.textContent));
+  const caveat = [...document.querySelectorAll('.modal .banner')].some(b => /bukan analisis elemen hingga/i.test(b.textContent));
   return { svg: !!svg, paths: svg ? svg.querySelectorAll('path').length : 0, axes: svg ? svg.querySelectorAll('.section-axis').length : 0, caveat };
 });
 check('the section is drawn to scale with its principal axes', drawn.svg && drawn.paths >= 1 && drawn.axes === 2, JSON.stringify(drawn));

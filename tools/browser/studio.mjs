@@ -62,7 +62,7 @@ const badge = await page.evaluate(() => {
   const b = document.getElementById('statusDoctor');
   return b && !b.hidden ? { text: b.textContent.trim(), cls: b.className } : null;
 });
-check('the status bar carries the verdict', !!badge && /pass|note|warning|blocking/i.test(badge.text), JSON.stringify(badge));
+check('the status bar carries the verdict', !!badge && /lolos|catatan|peringatan|penghalang/i.test(badge.text), JSON.stringify(badge));
 
 const panel = await page.evaluate(() =>
   [...document.querySelectorAll('#rightpanel .sec-title')].some(t => /design doctor/i.test(t.textContent)));

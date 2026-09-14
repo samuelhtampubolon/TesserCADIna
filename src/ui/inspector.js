@@ -5,7 +5,7 @@
  */
 import { el, clear, section, field, checkbox, select, segmented, kv, promptDialog, icon, emptyState, scrubNumber, verb } from './shell.js';
 import { store, catalogOf, MATERIALS, UNITS, uid, toDisplay, fromDisplay } from '../core/doc.js';
-import { tfmt } from '../core/i18n.js';
+import { t, tfmt } from '../core/i18n.js';
 import { tryEval } from '../core/expr.js';
 import { massProperties } from '../core/rebuild.js';
 import { ANIM_PROPS, EASINGS, SCHEDULE_MODES, MOTOR_TYPES } from '../sim/sim.js';
@@ -18,9 +18,9 @@ export function renderRightPanel(app) {
   const host = clear(document.getElementById('rightBody'));
   const title = document.getElementById('rightTitle');
 
-  if (app.workspace === 'draft') { title.textContent = 'Drafting'; renderDraft(app, host); return; }
-  if (app.workspace === 'sim') { title.textContent = 'Simulation'; renderSim(app, host); return; }
-  title.textContent = 'Properties';
+  if (app.workspace === 'draft') { title.textContent = t('Drafting'); renderDraft(app, host); return; }
+  if (app.workspace === 'sim') { title.textContent = t('Simulation'); renderSim(app, host); return; }
+  title.textContent = t('Properties');
   renderModel(app, host);
 }
 

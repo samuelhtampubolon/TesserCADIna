@@ -20,7 +20,7 @@
  * is worse than one that is a deploy behind, and the fetch below still
  * refreshes the cache in the background, so the next open is current.
  */
-const VERSION = 'tessercadina-e43b9fbffbef';
+const VERSION = 'tessercadina-cc513d71db35';
 const FILES = [
   "assets/favicon.svg",
   "index.html",

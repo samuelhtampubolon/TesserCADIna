@@ -1185,13 +1185,13 @@ class App {
     if (!r) return;
     const u = store.doc.meta.units;
     if (r.kind === 'distance') {
-      $('#hud').textContent = `distance  ${fmt(toDisplay(r.value, u))} ${u}\nΔ  ${fmt(toDisplay(r.delta.x, u))}, ${fmt(toDisplay(r.delta.y, u))}, ${fmt(toDisplay(r.delta.z, u))}`;
+      $('#hud').textContent = tfmt('distance  {value} {unit}\nΔ  {dx}, {dy}, {dz}', { value: fmt(toDisplay(r.value, u)), unit: u, dx: fmt(toDisplay(r.delta.x, u)), dy: fmt(toDisplay(r.delta.y, u)), dz: fmt(toDisplay(r.delta.z, u)) });
       this.flash(`Distance ${fmt(toDisplay(r.value, u))} ${u}`, 'ok', 6000);
     } else if (r.kind === 'angle') {
-      $('#hud').textContent = `angle  ${fmt(r.value)}°`;
+      $('#hud').textContent = tfmt('angle  {value}°', { value: fmt(r.value) });
       this.flash(`Angle ${fmt(r.value)}°`, 'ok', 6000);
     } else if (r.kind === 'point') {
-      $('#hud').textContent = `point  ${fmt(toDisplay(r.point.x, u))}, ${fmt(toDisplay(r.point.y, u))}, ${fmt(toDisplay(r.point.z, u))}`;
+      $('#hud').textContent = tfmt('point  {x}, {y}, {z}', { x: fmt(toDisplay(r.point.x, u)), y: fmt(toDisplay(r.point.y, u)), z: fmt(toDisplay(r.point.z, u)) });
     }
     this.markLearn('measure');
   }
@@ -1443,15 +1443,23 @@ class App {
 
   buildViewCube() {
     const host = clear($('#viewcube'));
-    const mk = (label, view, wide = false) => el('button', {
-      class: `vc${wide ? ' wide' : ''}`, text: label, title: `${label} view`,
+    // Three letters each, because the cube's cells are sized for three and a
+    // fourth is clipped. They are their own strings rather than the sheet's
+    // view names: "ATAS" is right on a drawing and does not fit here.
+    const FACE = {
+      top: ['ATS', 'Top view'], front: ['DPN', 'Front view'], right: ['KAN', 'Right view'],
+      bottom: ['BWH', 'Bottom view'], back: ['BLK', 'Back view'], left: ['KIR', 'Left view'],
+      iso: ['ISO', 'Isometric view'],
+    };
+    const mk = (view, wide = false) => el('button', {
+      class: `vc${wide ? ' wide' : ''}`, text: FACE[view][0], title: FACE[view][1],
       onclick: () => this.vp.standardView(view),
     });
     host.append(
-      el('div', { class: 'vc-row' }, [mk('TOP', 'top'), mk('FRT', 'front'), mk('RGT', 'right')]),
-      el('div', { class: 'vc-row' }, [mk('BTM', 'bottom'), mk('BCK', 'back'), mk('LFT', 'left')]),
+      el('div', { class: 'vc-row' }, [mk('top'), mk('front'), mk('right')]),
+      el('div', { class: 'vc-row' }, [mk('bottom'), mk('back'), mk('left')]),
       el('div', { class: 'vc-row' }, [
-        mk('ISO', 'iso', true),
+        mk('iso', true),
         el('button', { class: 'vc', title: 'Zoom to fit  (F)', onclick: () => this.zoomFit() }, [icon('fit', { size: 13 })]),
       ]),
     );
@@ -1497,7 +1505,7 @@ class App {
     if (n) sel.append(icon('target', { size: 12 }), el('span', { text: `${n} selected` }));
 
     if (this.workspace === 'draft') {
-      $('#statusStats').textContent = `${store.doc.draw.entities.length} objects · ${store.doc.draw.layers.length} layers`;
+      $('#statusStats').textContent = tfmt('{objects} objects · {layers} layers', { objects: store.doc.draw.entities.length, layers: store.doc.draw.layers.length });
     } else if (s) {
       $('#statusStats').textContent = tfmt('{bodies} bodies · {p1} tris · {p2} kg · {p3} ms', { bodies: s.bodies, p1: s.tris.toLocaleString(), p2: fmt(s.mass, 3), p3: Math.round(this.buildMs || 0) });
     }
@@ -1526,9 +1534,9 @@ class App {
         clear(btn);
         btn.append(
           icon(r.counts.block ? 'warning' : r.issues.length ? 'probe' : 'check', { size: 12 }),
-          el('span', { text: r.counts.block ? `${r.counts.block} blocking`
-            : r.counts.warn ? `${r.counts.warn} warning${r.counts.warn === 1 ? '' : 's'}`
-              : r.issues.length ? `${r.issues.length} note${r.issues.length === 1 ? '' : 's'}` : 'Checks pass' }),
+          el('span', { text: r.counts.block ? tfmt('{n} blocking', { n: r.counts.block })
+            : r.counts.warn ? tfmt('{n} warnings', { n: r.counts.warn })
+              : r.issues.length ? tfmt('{n} notes', { n: r.issues.length }) : 'Checks pass' }),
         );
       }
     }
@@ -1616,7 +1624,7 @@ class App {
     card.append(
       el('h4', {}, [
         icon('bulb', { size: 15 }),
-        el('span', { text: `Learn TesserCAD · ${done.size}/${this.LEARN_STEPS.length}` }),
+        el('span', { text: tfmt('Learn {app} · {done}/{total}', { app: APP_NAME, done: done.size, total: this.LEARN_STEPS.length }) }),
         el('button', { class: 'mini-btn', title: 'Hide this card', onclick: () => this.toggleLearn() }, [icon('close', { size: 13 })]),
       ]),
       el('ol', {}, this.LEARN_STEPS.slice(Math.max(0, next - 1), next + 2).map(([k, html]) =>
@@ -1844,7 +1852,7 @@ class App {
           issue.fix ? el('div', { class: 'btn-row' }, [
             el('button', {
               class: 'btn sm primary', text: issue.fix.label,
-              onclick: (e) => { this.applyFix(issue); e.target.disabled = true; e.target.textContent = 'Applied'; },
+              onclick: (e) => { this.applyFix(issue); e.target.disabled = true; e.target.textContent = t('Applied'); },
             }),
           ]) : null,
         ].filter(Boolean)));
@@ -4497,5 +4505,5 @@ try {
 } catch (err) {
   console.error(err);
   const m = document.getElementById('bootMsg');
-  if (m) { m.textContent = `Startup failed: ${err.message}`; m.style.color = '#ff6b6b'; }
+  if (m) { m.textContent = tfmt('Startup failed: {error}', { error: err.message }); m.style.color = '#ff6b6b'; }
 }

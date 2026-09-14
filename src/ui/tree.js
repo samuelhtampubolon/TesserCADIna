@@ -9,7 +9,7 @@ import { el, clear, promptDialog, icon, emptyState, contextMenu, verb } from './
 import { attachLongPress } from './mobile.js';
 import { store, catalogOf, MATERIALS } from '../core/doc.js';
 import { ICON_FOR } from './commands.js';
-import { tfmt } from '../core/i18n.js';
+import { t, tfmt } from '../core/i18n.js';
 
 let filterText = '';
 
@@ -17,10 +17,10 @@ export function renderLeftPanel(app) {
   const host = clear(document.getElementById('leftBody'));
   const title = document.getElementById('leftTitle');
   if (app.workspace === 'draft') {
-    title.textContent = 'Layers & objects';
+    title.textContent = t('Layers & objects');
     renderLayers(app, host);
   } else {
-    title.textContent = app.workspace === 'sim' ? 'Bodies' : 'Feature tree';
+    title.textContent = t(app.workspace === 'sim' ? 'Bodies' : 'Feature tree');
     renderFeatures(app, host);
   }
 }

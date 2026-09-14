@@ -737,4 +737,30 @@ export const PROSE = {
 
   /* ---- templates: the spec editor ---- */
   'line {n}': 'baris {n}',
+
+  /* ---- x ---- */
+
+  /* ---- the panel titles and the measurement HUD ---- */
+  '{objects} objects · {layers} layers': '{objects} objek · {layers} layer',
+  'distance  {value} {unit}\nΔ  {dx}, {dy}, {dz}': 'jarak  {value} {unit}\nΔ  {dx}, {dy}, {dz}',
+  'angle  {value}°': 'sudut  {value}°',
+  'point  {x}, {y}, {z}': 'titik  {x}, {y}, {z}',
+  'Startup failed: {error}': 'Gagal memulai: {error}',
+
+  /* ---- the status badge and the learning card ---- */
+  '{n} blocking': '{n} penghalang',
+  '{n} warnings': '{n} peringatan',
+  '{n} notes': '{n} catatan',
+  'Learn {app} · {done}/{total}': 'Belajar {app} · {done}/{total}',
+
+  /* ---- x ---- */
+
+  /* ---- x ---- */
+
+  /* ---- the command palette chrome ---- */
+  ' navigate': ' navigasi',
+  ' run': ' jalankan',
+  ' close': ' tutup',
+  'Recent': 'Terakhir dipakai',
+  '{n} results': '{n} hasil',
 };

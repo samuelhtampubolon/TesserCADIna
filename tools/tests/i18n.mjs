@@ -60,6 +60,8 @@ const EXEMPT = new Map([
   ['Resin (SLA/DLP)', 'process name, identical in Indonesian'],
   ['Normal (±3σ)', 'identical in Indonesian'],
   ['(min-width: 700px) and (max-width: 1279px) and (min-height: 461px)', 'a CSS media query, not language'],
+  ['<code>pi</code> <code>tau</code> <code>e</code> <code>phi</code>', 'the constants the expression engine defines, which are their own names'],
+  ['<svg viewBox="-40 -40 80 80" width="72" height="72"></svg>', 'an empty SVG frame the section preview draws into'],
   ['property uchar red', 'a PLY header token, written into an exported file'],
   ['property uchar green', 'a PLY header token'],
   ['property uchar blue', 'a PLY header token'],
@@ -126,6 +128,7 @@ const STR = String.raw`(?:'((?:[^'\\]|\\.)*)'|"((?:[^"\\]|\\.)*)")`;
  */
 const SITES = [
   ['text', String.raw`\btext:\s*`],
+  ['html', String.raw`\bhtml:\s*`],
   ['title', String.raw`\btitle:\s*`],
   ['placeholder', String.raw`\bplaceholder:\s*`],
   ['aria-label', String.raw`'aria-label':\s*`],
@@ -137,6 +140,25 @@ const SITES = [
   ['flash()', String.raw`\bflash\(\s*`],
   ['t()', String.raw`\bt\(\s*`],
   ['tfmt()', String.raw`\btfmt\(\s*`],
+  // Widgets that take their label as the first argument rather than in an
+  // attribute bag. `section()` and friends do pass it through el(), so the
+  // string is translated if the dictionary has it - the sweep just could not
+  // see it, and four panel headings were missing entries because of that.
+  ['section()', String.raw`\bsection\(\s*`],
+  ['field()', String.raw`\bfield\(\s*`],
+  ['checkbox()', String.raw`\bcheckbox\(\s*`],
+  ['emptyState()', String.raw`\bemptyState\(\s*`],
+  ['confirmDialog()', String.raw`\bconfirmDialog\(\s*`],
+  ['promptDialog()', String.raw`\bpromptDialog\(\s*`],
+  // Assigning straight to the DOM goes around el() entirely, which is how the
+  // two panel headings stayed English while everything inside them was not.
+  ['textContent', String.raw`\.textContent\s*=\s*`],
+  ['innerHTML', String.raw`\.innerHTML\s*=\s*`],
+  // The command registry takes its label positionally, after the id, and every
+  // one of those labels is a menu entry and a palette row. Scoped to that one
+  // file: mobile.js has two `add` helpers of its own whose second argument is
+  // an icon name in one of them and a label in the other.
+  ['command', String.raw`\badd\(\s*'[^']*',\s*`, 'ui/commands.js'],
 ];
 
 const unescape = (s) => s.replace(/\\(['"\\])/g, '$1').replace(/\\n/g, '\n');
@@ -150,7 +172,8 @@ const found = new Map();       // string -> Set of "file (site)"
 
 for (const file of files) {
   const code = readFileSync(file, 'utf8');
-  for (const [site, prefix] of SITES) {
+  for (const [site, prefix, onlyIn] of SITES) {
+    if (onlyIn && !relative(root, file).endsWith(onlyIn)) continue;
     const re = new RegExp(prefix + STR, 'g');
     let m;
     while ((m = re.exec(code))) {
