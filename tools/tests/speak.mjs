@@ -74,7 +74,7 @@ ok('so the expression actually evaluates against it', (() => {
   const { scope } = buildScope(r.params.map((p, i) => ({ id: `p${i}`, ...p })));
   return Math.abs(evaluate(first(r).params.r, scope) - 3.3) < 1e-9;
 })());
-ok('and it says why that matters', r.notes.some(n => /changing the bolt size/.test(n)));
+ok('and it says why that matters', r.notes.some(n => /mengubah ukuran bautnya/.test(n)));
 
 /* ---- counts become patterns, not copies ---- */
 ok('a count is read from before its noun, across words in between', r.plan.count === 4, String(r.plan.count));
@@ -98,7 +98,7 @@ ok('a sides count goes to the shape, not to a pattern', (() => {
 r = P('an M6 hole');
 ok('a hole is a cut, not a body', r.plan.kind === 'cut');
 ok('with nothing selected it says so rather than failing',
-  r.notes.some(n => /Nothing was selected/.test(n)), r.notes.join(' | '));
+  r.notes.some(n => /Tidak ada yang dipilih/.test(n)), r.notes.join(' | '));
 r = S.interpret('an M6 hole', { target: 'someFeatureId' });
 ok('with something selected it emits the subtract for you',
   r.features.at(-1).type === 'boolean' && r.features.at(-1).params.op === 'subtract');
@@ -106,7 +106,7 @@ ok('and the boolean consumes the target and the hole',
   r.features.at(-1).inputs[0] === 'someFeatureId' && r.features.at(-1).inputs.length === 2,
   JSON.stringify(r.features.at(-1).inputs));
 ok('a hole with no depth is given one, and says so',
-  first(r).params.h === 60 && r.notes.some(n => /No depth given/.test(n)));
+  first(r).params.h === 60 && r.notes.some(n => /Kedalaman tidak disebut/.test(n)));
 ok('but a stated depth is used', first(P('an M6 hole 12 deep')).params.h === 12);
 
 /* ---- materials ---- */
@@ -123,18 +123,19 @@ ok('and the length is separate from the wall', first(r).params.h === 50);
 /* ---- refusal ---- */
 r = P('please make it nicer');
 ok('a sentence with no shape in it is refused', !r.ok);
-ok('and the refusal explains that this is a vocabulary, not English',
-  /vocabulary rather than English/.test(r.why), r.why);
-ok('it lists what it does know', /cylinder/.test(r.why));
+ok('and the refusal explains that this is a vocabulary, not free language',
+  /membaca kosa kata/.test(r.why), r.why);
+ok('it lists what it does know, in Indonesian', /silinder/.test(r.why));
 ok('a refusal produces no features at all', r.features.length === 0);
 ok('empty input is refused without throwing', !P('').ok && !P(null).ok);
 ok('gibberish is refused', !P('asdf qwer zxcv').ok);
 
 /* ---- the readback names every fact taken ---- */
 r = P('a 120 by 80 aluminium plate 8 thick');
-ok('the readback names the shape', r.understood[0] === 'add a rounded plate', r.understood[0]);
-ok('it names the dimensions', r.understood.some(u => /120 by 80/.test(u)), r.understood.join(' | '));
-ok('it names the thickness', r.understood.some(u => /8 mm thick/.test(u)));
+ok('the readback names the shape, in Indonesian',
+  r.understood[0] === 'tambah rounded plate', r.understood[0]);
+ok('it names the dimensions', r.understood.some(u => /120 kali 80/.test(u)), r.understood.join(' | '));
+ok('it names the thickness', r.understood.some(u => /tebal 8 mm/.test(u)));
 ok('and the material', r.understood.some(u => /Aluminium/.test(u)));
 
 /* ---- unknown words are surfaced, not swallowed ---- */
@@ -151,6 +152,47 @@ doc.params = [{ id: 'p1', name: 'clear_m6', value: 6.6, note: 'mine' }];
 r = S.interpret('2 M6 holes', { doc });
 ok('a parameter the document already has is referenced, not redeclared',
   r.params.length === 0 && /clear_m6/.test(String(first(r).params.r)), JSON.stringify(r.params));
+
+/* ---- Bahasa Indonesia, which is the edition's whole point ---- */
+ok('an Indonesian shape word builds the same feature as the English one',
+  first(P('pelat 120 kali 80 tebal 8')).type === first(P('a 120 by 80 plate 8 thick')).type);
+r = P('pelat 120 kali 80 tebal 8 dari aluminium');
+ok('"kali" between two numbers is a separator, like "by"',
+  first(r).params.w === 120 && first(r).params.d === 80,
+  JSON.stringify(first(r).params));
+ok('a keyword in front of its number binds forwards, not back',
+  first(r).params.h === 8, String(first(r).params.h));
+ok('and the material word is Indonesian too', r.plan.material === 'aluminium');
+ok('while "kali" elsewhere is still a count', P('4 kali lubang M6').plan.count === 4,
+  String(P('4 kali lubang M6').plan.count));
+
+ok('Indonesian number words count', P('empat lubang M6').plan.count === 4,
+  String(P('empat lubang M6').plan.count));
+ok('an Indonesian unit converts', first(P('kotak 2 inci kali 3 inci kali 1 inci')).params.w === 50.8,
+  String(first(P('kotak 2 inci kali 3 inci kali 1 inci')).params.w));
+ok('"milimeter" is not eaten by the shorter "mil"',
+  first(P('bola radius 18 milimeter')).params.r === 18,
+  String(first(P('bola radius 18 milimeter')).params.r));
+ok('a bare number after an Indonesian shape word is a diameter, not a radius',
+  first(P('poros 20')).params.r === 10, String(first(P('poros 20')).params.r));
+ok('but two bare numbers still fill the catalogue fields in order',
+  first(P('silinder 20 45')).params.r === 20 && first(P('silinder 20 45')).params.h === 45,
+  JSON.stringify(first(P('silinder 20 45')).params));
+ok('"melingkar" gives a circular pattern',
+  P('6 lubang tap M8 melingkar').features[1].type === 'patternCircular');
+ok('"berjarak" is the spacing', P('4 lubang M6 berjarak 40').plan.spacing === 40,
+  String(P('4 lubang M6 berjarak 40').plan.spacing));
+ok('"dinding" is the wall thickness, separate from the length',
+  first(P('tabung diameter 40 dinding 3 panjang 50')).params.ri === 17
+  && first(P('tabung diameter 40 dinding 3 panjang 50')).params.h === 50,
+  JSON.stringify(first(P('tabung diameter 40 dinding 3 panjang 50')).params));
+ok('"ditap" reaches the tapping drill, like "tapped"',
+  P('lubang M8 ditap').plan.thread.dia === 6.8, String(P('lubang M8 ditap').plan.thread.dia));
+ok('Indonesian filler words are not reported as unknown',
+  P('tolong buatkan sebuah kotak 60 dengan bahan baja').unknown.length === 0,
+  P('tolong buatkan sebuah kotak 60 dengan bahan baja').unknown.join(','));
+ok('and an Indonesian sentence with no shape is still refused',
+  !P('tolong bikin yang lebih bagus').ok);
 
 /* ---- every published example parses ---- */
 const broken = S.EXAMPLES.filter(e => !S.interpret(e).ok);
