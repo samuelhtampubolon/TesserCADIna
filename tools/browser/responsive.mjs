@@ -170,7 +170,7 @@ for (const [name, w, h] of SIZES) {
   ok('the compact menu holds all thirteen menus', m && m.rows.length === 13 && m.arrows === 13, JSON.stringify(m && m.rows));
 
   // tap a row: the submenu must open without a hover event
-  await page.click('.dropdown .menu-item:has-text("Create")');
+  await page.click('.dropdown .menu-item:has-text("Buat")');
   await page.waitForTimeout(220);
   const sub = await page.evaluate(() => {
     const s = document.querySelector('.dropdown.submenu');
@@ -182,7 +182,7 @@ for (const [name, w, h] of SIZES) {
   ok('the submenu stays on screen', sub && sub.fits, JSON.stringify(sub));
 
   // tap back into the parent menu: it must not close the whole dropdown
-  await page.click('.dropdown:not(.submenu) .menu-item:has-text("View")');
+  await page.click('.dropdown:not(.submenu) .menu-item:has-text("Tampilan")');
   await page.waitForTimeout(220);
   const still = await page.evaluate(() => ({
     root: !!document.querySelector('.dropdown:not(.submenu)'),
@@ -201,7 +201,7 @@ for (const [name, w, h] of SIZES) {
 /* -------------------- the floating cluster's view control and long-press */
 {
   const { ctx, page } = await open(820, 1180);
-  await page.click('#mobFab .fab-btn[aria-label*="Views" i]');
+  await page.click('#mobFab .fab-btn[aria-label*="Sudut pandang" i]');
   await page.waitForTimeout(250);
   const pop = await page.evaluate(() => {
     const d = document.querySelector('.dropdown');
@@ -219,7 +219,7 @@ for (const [name, w, h] of SIZES) {
   ok('the view popover is grouped and on screen', pop && pop.groups.length === 3 && pop.onScreen, JSON.stringify(pop));
   ok('no bottom sheet was opened', await page.evaluate(() => !document.querySelector('.sheet')));
 
-  await page.click('.dropdown .menu-item:has-text("Front")');
+  await page.click('.dropdown .menu-item:has-text("Tampilan depan")');
   await page.waitForTimeout(400);
   ok('a view command runs from the popover', await page.evaluate(() => !document.querySelector('.dropdown')));
 

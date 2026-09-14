@@ -196,7 +196,7 @@ class App {
     if (saved?.doc && (saved.doc.features?.length || saved.doc.draw?.entities?.length)) {
       try {
         store.load(saved.doc, { markClean: false });
-        this.flash(`Restored your last session from ${new Date(saved.at).toLocaleString()}`, 'ok', 5000);
+        this.flash(tfmt('Restored your last session from {when}', { when: new Date(saved.at).toLocaleString() }), 'ok', 5000);
         return;
       } catch (e) { console.warn('restore failed', e); }
     }
@@ -224,7 +224,7 @@ class App {
 
   guardUnsaved(message, go) {
     if (!store.dirty) { go(); return; }
-    confirmDialog('Unsaved changes', `${message} Anything not saved to a file will be lost.`, go, { danger: true, yes: 'Discard and continue' });
+    confirmDialog('Unsaved changes', tfmt('{message} Anything not saved to a file will be lost.', { message }), go, { danger: true, yes: 'Discard and continue' });
   }
 
   loadSample() {
@@ -235,11 +235,11 @@ class App {
   }
 
   applyTemplate(t) {
-    this.guardUnsaved(`Start from “${t.name}”?`, () => {
+    this.guardUnsaved(tfmt('Start from “{name}”?', { name: t.name }), () => {
       store.load(t.build());
       this.selection.clear();
       setTimeout(() => this.vp.frameAll(), 80);
-      this.flash(`Started from ${t.name}`, 'ok');
+      this.flash(tfmt('Started from {template}', { template: t.name }), 'ok');
       closeModal();
     });
   }
@@ -262,7 +262,7 @@ class App {
       store.quiet((d) => { d.meta.name = name; });
       IO.saveProject();
       this.refreshUI();
-    }, { help: `Saved as ${FILE_EXT} — plain JSON you can keep in git.` });
+    }, { help: tfmt('Saved as {FILE_EXT} — plain JSON you can keep in git.', { FILE_EXT }) });
   }
 
   revert() {
@@ -283,7 +283,7 @@ class App {
     if (!saved?.doc) { this.flash('No autosaved session found', 'warn'); return; }
     const n = saved.doc.features?.length || 0;
     confirmDialog('Recover autosave',
-      `Restore the session saved at ${new Date(saved.at).toLocaleString()} (${n} feature${n === 1 ? '' : 's'})? The current document will be replaced.`,
+      tfmt('Restore the session saved at {p1} ({n} feature)? The current document will be replaced.', { p1: new Date(saved.at).toLocaleString(), n }),
       () => { store.load(saved.doc, { markClean: false }); this.vp.frameAll(); }, { yes: 'Restore' });
   }
 
@@ -404,9 +404,9 @@ class App {
         why: issue.why,
         doc: store.doc.meta.name,
       });
-      this.flash(`${issue.fix.label}. Ctrl Z puts it back.`, 'ok', 4200);
+      this.flash(tfmt('{repair}. Ctrl Z puts it back.', { repair: issue.fix.label }), 'ok', 4200);
     } catch (err) {
-      this.flash(`Could not apply that repair: ${err.message}`, 'err', 6000);
+      this.flash(tfmt('Could not apply that repair: {error}', { error: err.message }), 'err', 6000);
     }
   }
 
@@ -680,7 +680,7 @@ class App {
     else {
       if (!this.selection.size) return;
       this.isolated = new Set(this.selection);
-      this.flash(`Isolated ${this.isolated.size} bod${this.isolated.size === 1 ? 'y' : 'ies'} — press / to exit`, 'ok');
+      this.flash(tfmt('Isolated {n} bodies — press / to exit', { n: this.isolated.size }), 'ok');
     }
     this.applyIsolation();
     this.refreshUI();
@@ -710,7 +710,7 @@ class App {
       }
     }, { rebuild: false });
     this.refreshBodies();
-    this.flash(`${m.name} applied to ${ids.length} bod${ids.length === 1 ? 'y' : 'ies'}`, 'ok', 1800);
+    this.flash(tfmt('{material} applied to {n} bodies', { material: m.name, n: ids.length }), 'ok', 1800);
   }
 
   showMaterialPicker() {
@@ -842,14 +842,14 @@ class App {
     const i = { x: 0, y: 1, z: 2 }[axis];
     const target = list.reduce((s, b) => s + b.c.getComponent(i), 0) / list.length;
     const scope = this.build.scope;
-    store.edit(`Align on ${axis.toUpperCase()}`, () => {
+    store.edit(tfmt('Align on {p1}', { p1: axis.toUpperCase() }), () => {
       for (const b of list) {
         const f = store.feature(b.id);
         if (!f) continue;
         f.transform.pos[i] = evalSafe(f.transform.pos[i], scope, 0) + (target - b.c.getComponent(i));
       }
     });
-    this.flash(`Aligned ${list.length} bodies on ${axis.toUpperCase()}`, 'ok', 1800);
+    this.flash(tfmt('Aligned {n} bodies on {axis}', { n: list.length, axis: axis.toUpperCase() }), 'ok', 1800);
   }
 
   distributeSelection() {
@@ -959,7 +959,7 @@ class App {
       });
       this.refreshUI();
     };
-    if (n) confirmDialog('Delete layer', `This removes the layer and its ${n} object${n > 1 ? 's' : ''}.`, go, { danger: true, yes: 'Delete' });
+    if (n) confirmDialog('Delete layer', tfmt('This removes the layer and its {n} object.', { n }), go, { danger: true, yes: 'Delete' });
     else go();
   }
 
@@ -1025,7 +1025,7 @@ class App {
     this.setWorkspace('sim');
     this.refreshSim(); this.refreshUI();
     this.markLearn('sequence');
-    this.flash(`Sequenced ${n} bodies across the timeline`, 'ok');
+    this.flash(tfmt('Sequenced {n} bodies across the timeline', { n }), 'ok');
   }
 
   clearSchedule() {
@@ -1185,13 +1185,13 @@ class App {
     if (!r) return;
     const u = store.doc.meta.units;
     if (r.kind === 'distance') {
-      $('#hud').textContent = `distance  ${fmt(toDisplay(r.value, u))} ${u}\nΔ  ${fmt(toDisplay(r.delta.x, u))}, ${fmt(toDisplay(r.delta.y, u))}, ${fmt(toDisplay(r.delta.z, u))}`;
+      $('#hud').textContent = tfmt('distance  {value} {unit}\nΔ  {dx}, {dy}, {dz}', { value: fmt(toDisplay(r.value, u)), unit: u, dx: fmt(toDisplay(r.delta.x, u)), dy: fmt(toDisplay(r.delta.y, u)), dz: fmt(toDisplay(r.delta.z, u)) });
       this.flash(`Distance ${fmt(toDisplay(r.value, u))} ${u}`, 'ok', 6000);
     } else if (r.kind === 'angle') {
-      $('#hud').textContent = `angle  ${fmt(r.value)}°`;
+      $('#hud').textContent = tfmt('angle  {value}°', { value: fmt(r.value) });
       this.flash(`Angle ${fmt(r.value)}°`, 'ok', 6000);
     } else if (r.kind === 'point') {
-      $('#hud').textContent = `point  ${fmt(toDisplay(r.point.x, u))}, ${fmt(toDisplay(r.point.y, u))}, ${fmt(toDisplay(r.point.z, u))}`;
+      $('#hud').textContent = tfmt('point  {x}, {y}, {z}', { x: fmt(toDisplay(r.point.x, u)), y: fmt(toDisplay(r.point.y, u)), z: fmt(toDisplay(r.point.z, u)) });
     }
     this.markLearn('measure');
   }
@@ -1443,15 +1443,23 @@ class App {
 
   buildViewCube() {
     const host = clear($('#viewcube'));
-    const mk = (label, view, wide = false) => el('button', {
-      class: `vc${wide ? ' wide' : ''}`, text: label, title: `${label} view`,
+    // Three letters each, because the cube's cells are sized for three and a
+    // fourth is clipped. They are their own strings rather than the sheet's
+    // view names: "ATAS" is right on a drawing and does not fit here.
+    const FACE = {
+      top: ['ATS', 'Top view'], front: ['DPN', 'Front view'], right: ['KAN', 'Right view'],
+      bottom: ['BWH', 'Bottom view'], back: ['BLK', 'Back view'], left: ['KIR', 'Left view'],
+      iso: ['ISO', 'Isometric view'],
+    };
+    const mk = (view, wide = false) => el('button', {
+      class: `vc${wide ? ' wide' : ''}`, text: FACE[view][0], title: FACE[view][1],
       onclick: () => this.vp.standardView(view),
     });
     host.append(
-      el('div', { class: 'vc-row' }, [mk('TOP', 'top'), mk('FRT', 'front'), mk('RGT', 'right')]),
-      el('div', { class: 'vc-row' }, [mk('BTM', 'bottom'), mk('BCK', 'back'), mk('LFT', 'left')]),
+      el('div', { class: 'vc-row' }, [mk('top'), mk('front'), mk('right')]),
+      el('div', { class: 'vc-row' }, [mk('bottom'), mk('back'), mk('left')]),
       el('div', { class: 'vc-row' }, [
-        mk('ISO', 'iso', true),
+        mk('iso', true),
         el('button', { class: 'vc', title: 'Zoom to fit  (F)', onclick: () => this.zoomFit() }, [icon('fit', { size: 13 })]),
       ]),
     );
@@ -1497,9 +1505,9 @@ class App {
     if (n) sel.append(icon('target', { size: 12 }), el('span', { text: `${n} selected` }));
 
     if (this.workspace === 'draft') {
-      $('#statusStats').textContent = `${store.doc.draw.entities.length} objects · ${store.doc.draw.layers.length} layers`;
+      $('#statusStats').textContent = tfmt('{objects} objects · {layers} layers', { objects: store.doc.draw.entities.length, layers: store.doc.draw.layers.length });
     } else if (s) {
-      $('#statusStats').textContent = `${s.bodies} bodies · ${s.tris.toLocaleString()} tris · ${fmt(s.mass, 3)} kg · ${Math.round(this.buildMs || 0)} ms`;
+      $('#statusStats').textContent = tfmt('{bodies} bodies · {p1} tris · {p2} kg · {p3} ms', { bodies: s.bodies, p1: s.tris.toLocaleString(), p2: fmt(s.mass, 3), p3: Math.round(this.buildMs || 0) });
     }
     this.updateDoctorBadge();
     if (!this.ops.running) this.setStatusKeys(this.defaultKeyHints());
@@ -1522,13 +1530,13 @@ class App {
         btn.hidden = false;
         btn.className = `sb-item sb-btn dx-${r.counts.block ? 'err' : r.counts.warn ? 'warn' : r.issues.length ? 'info' : 'ok'}`;
         btn.onclick = () => this.showDoctorReport();
-        btn.title = `${r.checked} checks ran. Click for the full report.`;
+        btn.title = tfmt('{checked} checks ran. Click for the full report.', { checked: r.checked });
         clear(btn);
         btn.append(
           icon(r.counts.block ? 'warning' : r.issues.length ? 'probe' : 'check', { size: 12 }),
-          el('span', { text: r.counts.block ? `${r.counts.block} blocking`
-            : r.counts.warn ? `${r.counts.warn} warning${r.counts.warn === 1 ? '' : 's'}`
-              : r.issues.length ? `${r.issues.length} note${r.issues.length === 1 ? '' : 's'}` : 'Checks pass' }),
+          el('span', { text: r.counts.block ? tfmt('{n} blocking', { n: r.counts.block })
+            : r.counts.warn ? tfmt('{n} warnings', { n: r.counts.warn })
+              : r.issues.length ? tfmt('{n} notes', { n: r.issues.length }) : 'Checks pass' }),
         );
       }
     }
@@ -1616,7 +1624,7 @@ class App {
     card.append(
       el('h4', {}, [
         icon('bulb', { size: 15 }),
-        el('span', { text: `Learn TesserCAD · ${done.size}/${this.LEARN_STEPS.length}` }),
+        el('span', { text: tfmt('Learn {app} · {done}/{total}', { app: APP_NAME, done: done.size, total: this.LEARN_STEPS.length }) }),
         el('button', { class: 'mini-btn', title: 'Hide this card', onclick: () => this.toggleLearn() }, [icon('close', { size: 13 })]),
       ]),
       el('ol', {}, this.LEARN_STEPS.slice(Math.max(0, next - 1), next + 2).map(([k, html]) =>
@@ -1692,7 +1700,7 @@ class App {
         ...t.future.map(f => row(f, 'future')),
       ]));
       if (t.abandoned.length) {
-        body.appendChild(section(`Branches you left · ${t.abandoned.length}`, [
+        body.appendChild(section(tfmt('Branches you left · {count}', { count: t.abandoned.length }), [
           el('p', { class: 'hint', text: 'These are states you undid past and then edited away from. A linear undo stack throws them away the moment you make that next edit; here they are still reachable. Click one to go back to it, and the branch you are on now stays reachable too.' }),
           el('div', { class: 'hist-list' }, t.abandoned.slice(0, 40).map(a => row(a, 'abandoned'))),
         ], true, { icon: 'merge' }));
@@ -1702,7 +1710,7 @@ class App {
     modal({
       title: 'History', icon: 'history', wide: !!t.abandoned.length,
       subtitle: `${t.past.length} step${t.past.length === 1 ? '' : 's'} back, ${t.future.length} forward` +
-        (t.abandoned.length ? `, ${t.abandoned.length} on branches you left` : ''),
+        (t.abandoned.length ? tfmt(', {count} on branches you left', { count: t.abandoned.length }) : ''),
       body,
       actions: [{ label: 'Close', primary: true }],
     });
@@ -1827,7 +1835,7 @@ class App {
     const proc = processOf(store.doc.studio?.process || Studio.standards().process);
 
     const body = [
-      el('p', { class: 'hint', text: `${r.checked} checks ran against ${proc.label}. ${proc.note}` }),
+      el('p', { class: 'hint', text: tfmt('{n} checks ran against {process}. {note}', { n: r.checked, process: proc.label, note: proc.note }) }),
     ];
     if (!r.issues.length) {
       body.push(el('div', { class: 'banner ok', text: 'Everything passes. The model is ready to release.' }));
@@ -1844,7 +1852,7 @@ class App {
           issue.fix ? el('div', { class: 'btn-row' }, [
             el('button', {
               class: 'btn sm primary', text: issue.fix.label,
-              onclick: (e) => { this.applyFix(issue); e.target.disabled = true; e.target.textContent = 'Applied'; },
+              onclick: (e) => { this.applyFix(issue); e.target.disabled = true; e.target.textContent = t('Applied'); },
             }),
           ]) : null,
         ].filter(Boolean)));
@@ -1853,7 +1861,7 @@ class App {
     modal({
       title: 'Design doctor', icon: 'probe', wide: true,
       subtitle: r.issues.length
-        ? `${r.counts.block} blocking · ${r.counts.warn} warnings · ${r.counts.note} notes`
+        ? tfmt('{block} blocking · {warn} warnings · {note} notes', { block: r.counts.block, warn: r.counts.warn, note: r.counts.note })
         : 'No findings',
       body,
       actions: [{ label: 'Close', primary: true }],
@@ -1926,7 +1934,7 @@ class App {
             el('td', { class: 'mono', text: pt.each.toFixed(2) }),
           ]))),
         ]),
-        ...cross.changes.map(c => el('div', { class: 'hint', text: `Between ${c.from.qty} and ${c.to.qty} off, ${c.to.label} overtakes ${c.from.label}.` })),
+        ...cross.changes.map(c => el('div', { class: 'hint', text: tfmt('Between {from} and {to} off, {winner} overtakes {loser}.', { from: c.from.qty, to: c.to.qty, winner: c.to.label, loser: c.from.label }) })),
         cross.changes.length ? null : el('div', { class: 'hint', text: 'One process wins at every quantity here, so the decision does not hinge on volume.' }),
       ].filter(Boolean), true, { icon: 'timeline' }));
 
@@ -1937,14 +1945,14 @@ class App {
             el('span', { class: 'dx-title', text: l.label }),
           ]),
           el('div', { class: 'dx-why', text: l.note }),
-          el('div', { class: 'dx-detail', text: `${l.each.toFixed(2)} each by ${l.process}.` }),
+          el('div', { class: 'dx-detail', text: tfmt('{price} each by {process}.', { price: l.each.toFixed(2), process: l.process }) }),
         ])), true, { icon: 'bulb' }));
       }
     }
 
     modal({
       title: 'Cost estimate', icon: 'gauge', wide: true,
-      subtitle: `${parts.length} part${parts.length === 1 ? '' : 's'} · batch of ${batch} · ${est.mass.toFixed(3)} kg total`,
+      subtitle: tfmt('{count} part · batch of {batch} · {p1} kg total', { count: parts.length, batch, p1: est.mass.toFixed(3) }),
       body,
       actions: [{ label: 'Close', primary: true }],
     });
@@ -1980,7 +1988,7 @@ class App {
     ];
 
     if (blocking.length) {
-      body.push(el('div', { class: 'banner err', text: `${blocking.length} blocking finding${blocking.length === 1 ? '' : 's'} must be cleared first. Releasing is the moment an error costs the most, so this one is not a warning you can click past.` }));
+      body.push(el('div', { class: 'banner err', text: tfmt('{n} blocking findings must be cleared first. Releasing is the moment an error costs the most, so this one is not a warning you can click past.', { n: blocking.length }) }));
       for (const i of blocking) {
         body.push(el('div', { class: 'dx-item err' }, [
           el('div', { class: 'dx-head' }, [el('span', { class: 'dx-title', text: i.title })]),
@@ -1994,7 +2002,7 @@ class App {
         ].filter(Boolean)));
       }
     } else {
-      body.push(el('div', { class: 'banner ok', text: `All ${r.checked} checks pass. ${r.counts.warn} warning${r.counts.warn === 1 ? '' : 's'} and ${r.counts.note} note${r.counts.note === 1 ? '' : 's'} will be recorded in the package.` }));
+      body.push(el('div', { class: 'banner ok', text: tfmt('All {n} checks pass. {warnings} warnings and {notes} notes will be recorded in the package.', { n: r.checked, warnings: r.counts.warn, notes: r.counts.note }) }));
     }
 
     modal({
@@ -2043,7 +2051,7 @@ class App {
       preview.append(
         el('div', { class: 'msec-head', text: `${result.params.length} parameters, ${result.features.length} features` }),
         el('div', { class: 'hint', text: result.params.map(p => p.name).join(' · ') }),
-        el('div', { class: 'hint', text: `Every dimension above is written into the model as an expression, so changing the load changes the part.` }),
+        el('div', { class: 'hint', text: 'Every dimension above is written into the model as an expression, so changing the load changes the part.' }),
       );
       return result;
     };
@@ -2136,14 +2144,14 @@ class App {
       d.meta.notes = briefNotes(result, values);
     });
     Studio.logDecision({
-      title: `${result.label} from a design brief`,
+      title: tfmt('{label} from a design brief', { label: result.label }),
       choice: result.rationale[0] || '',
       why: result.rationale.join(' '),
       doc: store.doc.meta.name,
     });
     this.markLearn('create');
     setTimeout(() => this.vp.frameAll(), 120);
-    this.flash(`${result.label} built. The sizing is in Document → notes.`, 'ok', 5200);
+    this.flash(tfmt('{label} built. The sizing is in Document → notes.', { label: result.label }), 'ok', 5200);
   }
 
   /* ------------------------------------------------------------ macros */
@@ -2156,7 +2164,7 @@ class App {
       ];
 
       if (this.macro.isRecording) {
-        body.push(el('div', { class: 'banner warn', text: `Recording “${this.macro.recording.name}” · ${this.macro.recording.steps.length} step${this.macro.recording.steps.length === 1 ? '' : 's'} so far.` }));
+        body.push(el('div', { class: 'banner warn', text: tfmt('Recording “{name}” · {n} steps so far.', { name: this.macro.recording.name, n: this.macro.recording.steps.length }) }));
       }
 
       if (!list.length) {
@@ -2176,7 +2184,7 @@ class App {
                 onclick: () => {
                   const out = this.macro.run(m);
                   this.flash(out.ok
-                    ? `Ran ${out.ran} of ${out.total} steps${out.failed.length ? `, ${out.failed.length} skipped` : ''}. Ctrl Z undoes all of it.`
+                    ? tfmt('Ran {ran} of {total} steps{p1}. Ctrl Z undoes all of it.', { ran: out.ran, total: out.total, p1: out.failed.length ? `, ${out.failed.length} skipped` : '' })
                     : `Nothing ran: ${out.reason || out.failed[0]?.why || 'no applicable commands'}`,
                   out.ok ? 'ok' : 'warn', 5000);
                 },
@@ -2222,7 +2230,7 @@ class App {
   stopMacro() {
     const m = this.macro.stop();
     if (!m) { this.flash('Nothing replayable was recorded.', 'warn'); this.refreshUI(); return; }
-    this.flash(`Saved “${m.name}” with ${m.steps.length} steps.`, 'ok', 4500);
+    this.flash(tfmt('Saved “{name}” with {n} steps.', { name: m.name, n: m.steps.length }), 'ok', 4500);
     this.refreshUI();
   }
 
@@ -2248,7 +2256,7 @@ class App {
       ], true, { icon: 'workspace' }),
 
       section('Manufacturing limits', [
-        el('div', { class: 'hint', text: `Leave blank to use the process defaults. ${processOf(s.process).label}: ${processOf(s.process).minWall}mm wall, ${processOf(s.process).minFeature}mm feature, ±${processOf(s.process).tolerance}mm.` }),
+        el('div', { class: 'hint', text: tfmt('Leave blank to use the process defaults. {process}: {wall}mm wall, {feature}mm feature, ±{tolerance}mm.', { process: processOf(s.process).label, wall: processOf(s.process).minWall, feature: processOf(s.process).minFeature, tolerance: processOf(s.process).tolerance }) }),
         ...[['minWall', 'Minimum wall'], ['minFeature', 'Minimum feature'], ['tolerance', 'Tolerance ±']].map(([k, label]) => {
           const i = el('input', { type: 'number', step: '0.1', value: s[k] ?? '', placeholder: 'process default' });
           i.addEventListener('change', () => Studio.setStandard(k, i.value === '' ? null : Number(i.value)));
@@ -2281,7 +2289,7 @@ class App {
       section('Portability', [
         el('div', { class: 'hint', text: 'Standards, decisions and macros as one file, to move between machines or hand to a colleague.' }),
         el('div', { class: 'btn-row' }, [
-          el('button', { class: 'btn sm', text: 'Export studio', onclick: () => IO.download('tessercad-studio.json', Studio.exportStudio(), 'application/json') }),
+          el('button', { class: 'btn sm', text: 'Export studio', onclick: () => IO.download('tessercadina-studio.json', Studio.exportStudio(), 'application/json') }),
           el('button', {
             class: 'btn sm', text: 'Import studio…',
             onclick: async () => {
@@ -2309,7 +2317,7 @@ class App {
     const p = whyProgress();
     modal({
       title: 'Engineering notes', icon: 'book', wide: true,
-      subtitle: `${p.read} of ${p.total} read`,
+      subtitle: tfmt('{read} of {total} read', { read: p.read, total: p.total }),
       body: [
         el('p', { class: 'hint', text: 'These surface one at a time in the viewport, at the point where the model is actually doing the thing they describe. Here they all are at once.' }),
         ...list.map(l => section(l.title, [el('p', { text: l.body })], false, { icon: l.read ? 'check' : 'bulb' })),
@@ -2385,13 +2393,13 @@ class App {
         ], true, { icon: 'physics' }),
         el('div', { class: `banner ${r.pass ? 'ok' : 'err'}`, text:
           `${fmt(r.total, 2)} N/mm² against ${fmt(r.allow, 1)} allowable — ${r.verdict}. ` +
-          `${MATERIALS[body.feature.material]?.name || body.feature.material} at ${r.yieldMPa} MPa yield, safety factor ${r.safety}.` }),
+          tfmt('{p1} at {yieldMPa} MPa yield, safety factor {safety}.', { p1: MATERIALS[body.feature.material]?.name || body.feature.material, yieldMPa: r.yieldMPa, safety: r.safety }) }),
         el('div', { class: 'banner warn', text: 'Exact section properties, and a first-order stress from them. This is the calculation an engineer does on paper before deciding whether a part is worth analysing properly. It knows nothing about stress concentrations, how the load is introduced, fatigue, or anything three-dimensional. It is not finite element analysis.' }),
       );
       // append() stringifies null into the document, so a conditional row is
       // added rather than passed in as one.
       if (r.bucklingN) {
-        host.appendChild(el('div', { class: 'hint', text: `Euler buckling load for this length: ${fmt(r.bucklingN, 0)} N.` }));
+        host.appendChild(el('div', { class: 'hint', text: tfmt('Euler buckling load for this length: {n} N.', { n: fmt(r.bucklingN, 0) }) }));
       }
     };
     draw();
@@ -2410,7 +2418,7 @@ class App {
     const { clashes, tested, pairs, skipped, unchecked, ms } = findClashes(bodies, { budgetMs: 6000, maxPairs: 400 });
 
     const body = [
-      el('p', { class: 'hint', text: `${pairs} pairs share a bounding box; ${tested} were intersected exactly in ${Math.round(ms)} ms. This is a measured shared volume, not a bounding-box guess.` }),
+      el('p', { class: 'hint', text: tfmt('{pairs} pairs share a bounding box; {tested} were intersected exactly in {ms} ms. This is a measured shared volume, not a bounding-box guess.', { pairs, tested, ms: Math.round(ms) }) }),
     ];
 
     if (!clashes.length) {
@@ -2418,7 +2426,7 @@ class App {
       // Without a clash, the useful number is how close the nearest pair comes.
       const near = nearestPair(bodies);
       if (near) {
-        body.push(el('div', { class: 'hint', text: `Closest approach: ${near.a} and ${near.b}, about ${fmt(near.distance, 2)} mm apart. Sampled from the meshes, so the true gap may be slightly smaller.` }));
+        body.push(el('div', { class: 'hint', text: tfmt('Closest approach: {a} and {b}, about {mm} mm apart. Sampled from the meshes, so the true gap may be slightly smaller.', { a: near.a, b: near.b, mm: fmt(near.distance, 2) }) }));
       }
     } else {
       for (const c of clashes) {
@@ -2428,7 +2436,7 @@ class App {
             el('span', { class: 'dx-title', text: `${c.a.feature.name} ↔ ${c.b.feature.name}` }),
           ]),
           el('div', { class: 'dx-detail', text: c.exact
-            ? `Centred at ${fmt(c.at.x)}, ${fmt(c.at.y)}, ${fmt(c.at.z)}${c.fraction ? ` · ${(c.fraction * 100).toFixed(1)}% of the smaller body` : ''}`
+            ? tfmt('Centred at {p1}, {p2}, {p3}{p4}', { p1: fmt(c.at.x), p2: fmt(c.at.y), p3: fmt(c.at.z), p4: c.fraction ? tfmt(' · {percent}% of the smaller body', { percent: (c.fraction * 100).toFixed(1) }) : '' })
             : 'Too many triangles to intersect within the boolean budget.' }),
           el('div', { class: 'btn-row' }, [
             el('button', { class: 'btn sm', text: 'Show me', onclick: () => { this.select([c.a.feature.id, c.b.feature.id]); this.vp.frameSelection(); } }),
@@ -2445,12 +2453,12 @@ class App {
         ]));
       }
     }
-    if (skipped) body.push(el('div', { class: 'hint', text: `${skipped} pairs were skipped for size. Coarser segment counts would bring them inside the triangle budget.` }));
-    if (unchecked) body.push(el('div', { class: 'banner warn', text: `${unchecked} pairs ran out of time and were not checked. Reduce the model or check those bodies in isolation.` }));
+    if (skipped) body.push(el('div', { class: 'hint', text: tfmt('{n} pairs were skipped for size. Coarser segment counts would bring them inside the triangle budget.', { n: skipped }) }));
+    if (unchecked) body.push(el('div', { class: 'banner warn', text: tfmt('{n} pairs ran out of time and were not checked. Reduce the model or check those bodies in isolation.', { n: unchecked }) }));
 
     modal({
       title: 'Clash check', icon: 'target', wide: true,
-      subtitle: `${bodies.length} bodies · ${clashes.filter(c => c.exact).length} real clashes`,
+      subtitle: tfmt('{count} bodies · {p1} real clashes', { count: bodies.length, p1: clashes.filter(c => c.exact).length }),
       body,
       actions: [{ label: 'Close', primary: true }],
     });
@@ -2463,7 +2471,7 @@ class App {
     if (!meshes.length) { this.flash('No imported mesh in this document.', 'warn'); return; }
     const f = meshes.find(m => this.selection.has(m.id)) || meshes[0];
     const r = this.build.results.get(f.id);
-    if (!r || !r.instances.length) { this.flash(`${f.name} has no geometry.`, 'warn'); return; }
+    if (!r || !r.instances.length) { this.flash(tfmt('{name} has no geometry.', { name: f.name }), 'warn'); return; }
 
     const inst = r.instances[0];
     const found = recognise(inst.geometry, inst.matrix);
@@ -2476,7 +2484,7 @@ class App {
       body.push(el('div', { class: 'banner warn', text: found.reason }));
     } else {
       body.push(el('div', { class: 'banner info', text:
-        `${found.triangles.toLocaleString()} triangles · ${found.patches} surface patches · ${found.faces.length} flat faces · ${found.holes.length} holes · ${found.bosses.length} bosses` }));
+        tfmt('{p1} triangles · {patches} surface patches · {count} flat faces · {p2} holes · {p3} bosses', { p1: found.triangles.toLocaleString(), patches: found.patches, count: found.faces.length, p2: found.holes.length, p3: found.bosses.length }) }));
 
       if (found.holes.length) {
         body.push(section(`Holes (${found.holes.length})`, [
@@ -2510,7 +2518,7 @@ class App {
               el('td', { class: 'mono', text: String(x.triangles) }),
             ]))),
           ]),
-          found.faces.length > 20 ? el('div', { class: 'hint', text: `${found.faces.length - 20} smaller faces not listed.` }) : null,
+          found.faces.length > 20 ? el('div', { class: 'hint', text: tfmt('{n} smaller faces not listed.', { n: found.faces.length - 20 }) }) : null,
         ].filter(Boolean), false, { icon: 'plate' }));
       }
 
@@ -2518,7 +2526,10 @@ class App {
       const u = unitSanity(size);
       if (u.suspect) {
         body.push(el('div', { class: 'banner warn', text:
-          `Largest dimension is ${fmt(u.largestMm)} mm as read. ${u.suggestion ? `If the file was authored in ${u.suggestion.unit}, it would be ${fmt(u.suggestion.largest)} mm.` : 'That is outside the range real parts occupy.'} Nothing in a mesh file states its units, so this is for you to decide.` }));
+          tfmt(u.suggestion
+        ? 'Largest dimension is {mm} mm as read. If the file was authored in {unit}, it would be {alt} mm. Nothing in a mesh file states its units, so this is for you to decide.'
+        : 'Largest dimension is {mm} mm as read. That is outside the range real parts occupy. Nothing in a mesh file states its units, so this is for you to decide.',
+      { mm: fmt(u.largestMm), unit: u.suggestion?.unit, alt: u.suggestion ? fmt(u.suggestion.largest) : '' }) }));
       }
     }
 
@@ -2545,12 +2556,12 @@ class App {
       }));
     });
     Studio.logDecision({
-      title: `Parametric cut on a measured hole`,
+      title: 'Parametric cut on a measured hole',
       choice: `Ø${hole.diameter.toFixed(2)} at ${hole.centre.x.toFixed(1)}, ${hole.centre.y.toFixed(1)}, ${hole.centre.z.toFixed(1)}`,
       why: 'The imported mesh stays opaque, but the hole now has a feature that can be moved, resized and driven by a parameter.',
       doc: store.doc.meta.name,
     });
-    this.flash(`${spec.name} added as a parametric cut. It can be moved and resized like any feature.`, 'ok', 5200);
+    this.flash(tfmt('{name} added as a parametric cut. It can be moved and resized like any feature.', { name: spec.name }), 'ok', 5200);
   }
 
   /* ========================================================= configurations */
@@ -2621,7 +2632,7 @@ class App {
         id = Cfg.addConfig(d, v);
       }, { rebuild: false });
       if (id) this.activateConfiguration(id);
-      this.flash(`“${v}” is now active. Change a parameter and it is recorded against this variant only.`, 'ok', 5200);
+      this.flash(tfmt('“{name}” is now active. Change a parameter and it is recorded against this variant only.', { name: v }), 'ok', 5200);
     }, { help: 'Variants share one feature tree. Only the parameters you change are stored against them.' });
   }
 
@@ -2652,10 +2663,12 @@ class App {
     promptDialog('Save a version', 'What changed?', '', (msg) => {
       const r = VCS.commitVersion(msg || 'Snapshot');
       if (!r.ok) {
-        this.flash(`Could not save: local storage is full. ${r.pruned} old versions were dropped and it still did not fit.`, 'err', 7000);
+        this.flash(tfmt('Could not save: local storage is full. {n} old versions were dropped and it still did not fit.', { n: r.pruned }), 'err', 7000);
         return;
       }
-      this.flash(`Version saved on ${VCS.currentBranch()}${r.pruned ? `, ${r.pruned} oldest dropped for space` : ''}.`, 'ok', 4200);
+      this.flash((r.pruned
+      ? tfmt('Version saved on {branch}, {n} oldest dropped for space.', { branch: VCS.currentBranch(), n: r.pruned })
+      : tfmt('Version saved on {branch}.', { branch: VCS.currentBranch() })), 'ok', 4200);
       this.refreshUI();
     }, { help: 'A version is a full snapshot kept in this browser. Nothing is uploaded.' });
   }
@@ -2664,7 +2677,7 @@ class App {
     promptDialog('New branch', 'Name', 'experiment', (v) => {
       if (!v) return;
       const name = VCS.createBranch(v);
-      this.flash(`On branch “${name}”. Versions you save now stay here; the trunk is untouched.`, 'ok', 5000);
+      this.flash(tfmt('On branch “{name}”. Versions you save now stay here; the trunk is untouched.', { name }), 'ok', 5000);
       this.refreshUI();
     }, { help: 'A branch is somewhere to try an alternative without risking what already works.' });
   }
@@ -2699,7 +2712,7 @@ class App {
               el('span', { class: 'pill', text: new Date(v.at).toLocaleString() }),
             ]),
             el('div', { class: 'dx-detail', text: `${v.summary.features} features · ${v.summary.params} parameters${v.summary.configs > 1 ? ` · ${v.summary.configs} configurations` : ''}` }),
-            d ? el('div', { class: 'dx-why', text: `Against the version below: ${VCS.diffLine(d)}` }) : null,
+            d ? el('div', { class: 'dx-why', text: tfmt('Against the version below: {diff}', { diff: VCS.diffLine(d) }) }) : null,
             el('div', { class: 'btn-row' }, [
               el('button', {
                 class: 'btn sm', text: 'Compare with now',
@@ -2708,7 +2721,7 @@ class App {
               el('button', {
                 class: 'btn sm primary', text: 'Restore',
                 onclick: () => confirmDialog('Restore this version?',
-                  `The document goes back to "${v.message}". Save a version of where you are first if you want to come back.`,
+                  tfmt('The document goes back to "{message}". Save a version of where you are first if you want to come back.', { message: v.message }),
                   () => { VCS.restore(v.id); this.flash('Restored.', 'ok'); setTimeout(() => this.vp.frameAll(), 150); },
                   { yes: 'Restore' }),
               }),
@@ -2721,7 +2734,7 @@ class App {
         }
       }
 
-      body.push(el('div', { class: 'hint', text: `${use.versions} versions across ${use.branches} branches, using ${(use.bytes / 1e6).toFixed(2)} MB of about ${(use.limit / 1e6).toFixed(1)} MB. Oldest versions are dropped automatically when the space runs out.` }));
+      body.push(el('div', { class: 'hint', text: tfmt('{versions} versions across {branches} branches, using {used} MB of about {limit} MB. Oldest versions are dropped automatically when the space runs out.', { versions: use.versions, branches: use.branches, used: (use.bytes / 1e6).toFixed(2), limit: (use.limit / 1e6).toFixed(1) }) }));
 
       modal({
         title: 'Version history', icon: 'sequence', wide: true,
@@ -2741,7 +2754,7 @@ class App {
   showDiff(version) {
     const d = VCS.diff(version.doc, store.doc);
     const body = [
-      el('p', { class: 'hint', text: `Comparing “${version.message}” (${new Date(version.at).toLocaleString()}) with the document as it is now.` }),
+      el('p', { class: 'hint', text: tfmt('Comparing “{message}” ({when}) with the document as it is now.', { message: version.message, when: new Date(version.at).toLocaleString() }) }),
     ];
 
     if (d.empty) {
@@ -2813,7 +2826,7 @@ class App {
         ]),
         el('div', { class: 'hint', text: q.note }),
         q.tol
-          ? el('div', { class: 'banner info', text: `Chord tolerance ${q.tol} mm: no point on the exported mesh is further than that from the surface it represents. Segment counts follow from it, per feature, so a 3mm hole and a 200mm flange each get exactly what they need.` })
+          ? el('div', { class: 'banner info', text: tfmt('Chord tolerance {tol} mm: no point on the exported mesh is further than that from the surface it represents. Segment counts follow from it, per feature, so a 3mm hole and a 200mm flange each get exactly what they need.', { tol: q.tol }) })
           : el('div', { class: 'banner info', text: 'Export uses whatever segment counts the features already carry.' }),
       );
 
@@ -2823,7 +2836,7 @@ class App {
         host.append(
           el('div', { class: 'big-stat' }, [
             el('span', { class: 'bs-value', text: String(preview.after) }),
-            el('span', { class: 'bs-unit', text: `segments in total, from ${preview.before}` }),
+            el('span', { class: 'bs-unit', text: tfmt('segments in total, from {before}', { before: preview.before }) }),
           ]),
           el('div', { class: 'hint', text: `${grew} features refined, ${cut} coarsened, ${store.doc.features.length - preview.changes.length} unchanged.` }),
         );
@@ -2856,7 +2869,7 @@ class App {
           label: 'Use this quality', primary: true,
           run: () => {
             Studio.setStandard('exportQuality', quality);
-            this.flash(`Exports now use ${QUALITY[quality].label}.`, 'ok');
+            this.flash(tfmt('Exports now use {p1}.', { p1: QUALITY[quality].label }), 'ok');
           },
         },
       ],
@@ -2911,7 +2924,7 @@ class App {
 
   showWelcome() {
     modal({
-      title: `Selamat datang di ${APP_NAME}`, icon: 'bulb', wide: true,
+      title: tfmt('Selamat datang di {APP_NAME}', { APP_NAME }), icon: 'bulb', wide: true,
       subtitle: 'Studio CAD parametrik yang berjalan sepenuhnya di peramban. Tidak ada yang diunggah.',
       body: [
         el('div', { class: 'card-grid' }, [
@@ -3225,7 +3238,7 @@ class App {
           views: opts.views, hlr: opts.hlr, scale: opts.scale, projection: opts.projection,
         });
       } catch (err) {
-        host.appendChild(el('div', { class: 'banner err', text: `The drawing could not be built: ${err.message}` }));
+        host.appendChild(el('div', { class: 'banner err', text: tfmt('The drawing could not be built: {error}', { error: err.message }) }));
         return;
       }
       const ms = Math.round(performance.now() - t0);
@@ -3252,8 +3265,8 @@ class App {
           { hint: 'Off draws every edge, which is faster and sometimes clearer on a simple part.' }),
         el('div', { class: 'sheet-view', html: sheetToSVG(sheet, { dark: document.documentElement.dataset.theme !== 'light' }) }),
         el('div', { class: 'hint', text:
-          `${sheet.views.length} view${sheet.views.length === 1 ? '' : 's'} at ${scaleLabel(sheet.scale)} on ${sheet.paper.w} × ${sheet.paper.h} mm, ` +
-          `${sheet.views.reduce((n, v) => n + v.segs.length, 0)} edges and ${sheet.views.reduce((n, v) => n + v.circles.length, 0)} circles, built in ${ms} ms.` }),
+          tfmt('{n} views at {scale} on {w} × {h} mm, ', { n: sheet.views.length, scale: scaleLabel(sheet.scale), w: sheet.paper.w, h: sheet.paper.h }) +
+          tfmt('{p1} edges and {p2} circles, built in {ms} ms.', { p1: sheet.views.reduce((n, v) => n + v.segs.length, 0), p2: sheet.views.reduce((n, v) => n + v.circles.length, 0), ms }) }),
         el('div', { class: 'banner warn', text: 'Dimensions are the overall extents of each view and the diameters of the holes the recogniser found, which is a starting drawing rather than a finished one: datums, geometric tolerance and anything a functional surface needs are still yours to add.' }),
       );
     };
@@ -3284,7 +3297,7 @@ class App {
           sheet: o.sheet || 'a3l', views: o.views || ['front', 'top', 'right', 'iso'],
           hlr: o.hlr !== false, scale: o.scale || null, projection: o.projection || 'first',
         });
-      } catch (err) { this.flash(`The drawing could not be built: ${err.message}`, 'err'); return; }
+      } catch (err) { this.flash(tfmt('The drawing could not be built: {error}', { error: err.message }), 'err'); return; }
     }
     const name = store.doc.meta.name || 'drawing';
     if (kind === 'svg') {
@@ -3292,7 +3305,7 @@ class App {
     } else {
       IO.download(IO.safeName(`${name}-drawing`, '.dxf'), toDXF(sheetToDraw(sheet), { units: 'mm' }), 'image/vnd.dxf');
     }
-    this.flash(`Drawing saved as ${kind.toUpperCase()} at ${scaleLabel(sheet.scale)}.`, 'ok');
+    this.flash(tfmt('Drawing saved as {format} at {scale}.', { format: kind.toUpperCase(), scale: scaleLabel(sheet.scale) }), 'ok');
   }
 
 
@@ -3368,7 +3381,7 @@ class App {
           el('span', { class: 'stk-pm', text: '±' }), tol,
           select(l.dist, Object.entries(Tol.DISTRIBUTIONS).map(([k, v]) => [k, v.label]),
             (v) => { l.dist = v; commit('Stack distribution'); draw(); }),
-          el('div', { class: 'stk-bar', title: `${((c?.varianceShare || 0) * 100).toFixed(1)}% of the total variance` }, [
+          el('div', { class: 'stk-bar', title: tfmt('{percent}% of the total variance', { percent: ((c?.varianceShare || 0) * 100).toFixed(1) }) }, [
             el('div', { class: 'stk-fill', style: `width:${((c?.varianceShare || 0) * 100).toFixed(1)}%` }),
           ]),
           el('span', { class: 'stk-share', text: `${((c?.varianceShare || 0) * 100).toFixed(0)}%` }),
@@ -3386,7 +3399,7 @@ class App {
         stack.links = s.links; commit('Stack from model'); draw();
       });
 
-      host.appendChild(section(`The chain · ${stack.links.length} link${stack.links.length === 1 ? '' : 's'}`, [
+      host.appendChild(section(tfmt('The chain · {count} link', { count: stack.links.length }), [
         el('div', { class: 'stk-head' }, [
           el('span', { text: '±' }), el('span', { text: 'Dimension' }), el('span', { text: 'Nominal' }),
           el('span', { text: '' }), el('span', { text: 'Tolerance' }), el('span', { text: 'Distribution' }),
@@ -3399,27 +3412,27 @@ class App {
 
       /* --- the three answers --- */
       const band = (min, max, fits) => el('div', { class: `stk-verdict ${fits ? 'ok' : 'bad'}` }, [
-        el('strong', { text: `${fmt(min, 4)} to ${fmt(max, 4)} mm` }),
+        el('strong', { text: tfmt('{min} to {max} mm', { min: fmt(min, 4), max: fmt(max, 4) }) }),
         el('span', { text: fits ? 'inside the requirement' : 'outside the requirement' }),
       ]);
       host.appendChild(section('What the chain does', [
         el('div', { class: 'stk-answers' }, [
           el('div', { class: 'stk-answer' }, [
             el('h4', { text: 'Worst case' }), band(a.worst.min, a.worst.max, a.worst.fits),
-            el('div', { class: 'hint', text: `Uses ${(a.worst.used * 100).toFixed(0)}% of the requirement. This is the arithmetic a drawing promises, and it assumes every part is at its worst limit at once.` }),
+            el('div', { class: 'hint', text: tfmt('Uses {percent}% of the requirement. This is the arithmetic a drawing promises, and it assumes every part is at its worst limit at once.', { percent: (a.worst.used * 100).toFixed(0) }) }),
           ]),
           el('div', { class: 'stk-answer' }, [
             el('h4', { text: 'Root sum square' }), band(a.rss.min, a.rss.max, a.rss.fits),
-            el('div', { class: 'hint', text: `σ = ${fmt(a.rss.sigma, 5)} mm. What a run of parts really does, if the processes are centred and independent.` }),
+            el('div', { class: 'hint', text: tfmt('σ = {sigma} mm. What a run of parts really does, if the processes are centred and independent.', { sigma: fmt(a.rss.sigma, 5) }) }),
           ]),
           el('div', { class: 'stk-answer' }, [
             el('h4', { text: 'Monte Carlo' }), band(a.mc.p1, a.mc.p99, a.mc.failures === 0),
-            el('div', { class: 'hint', text: `${a.mc.trials.toLocaleString()} assemblies sampled, ${a.mc.failures} outside spec (${Math.round(a.mc.ppm)} ppm). 1st to 99th percentile shown.` }),
+            el('div', { class: 'hint', text: tfmt('{trials} assemblies sampled, {failures} outside spec ({ppm} ppm). 1st to 99th percentile shown.', { trials: a.mc.trials.toLocaleString(), failures: a.mc.failures, ppm: Math.round(a.mc.ppm) }) }),
           ]),
         ]),
         el('div', { class: `banner ${a.verdict.severity === 'ok' ? 'ok' : a.verdict.severity === 'warn' ? 'warn' : 'err'}`, text:
           `Cp ${a.capability.cp.toFixed(2)}, Cpk ${a.capability.cpk.toFixed(2)}. ${a.verdict.label}. ` +
-          `About ${Math.round(a.capability.ppm)} parts per million will not assemble.` }),
+          tfmt('About {p1} parts per million will not assemble.', { p1: Math.round(a.capability.ppm) }) }),
         el('div', { class: 'hint', text: a.capability.centred
           ? 'Cp and Cpk agree, so the chain is aimed at the middle of its requirement.'
           : 'Cp is well above Cpk, which means the chain is tight enough but aimed off centre. Moving a nominal is cheaper than buying tolerance.' }),
@@ -3433,12 +3446,12 @@ class App {
           (v) => { target = Number(v); draw(); }),
       ]));
       if (lv.met) {
-        advice.push(el('div', { class: 'banner ok', text: `The chain already meets Cpk ${target}. Nothing to change.` }));
+        advice.push(el('div', { class: 'banner ok', text: tfmt('The chain already meets Cpk {target}. Nothing to change.', { target }) }));
       } else if (!lv.closes) {
         // The nominals miss the requirement. Tolerance advice would be wrong
         // here, not merely unhelpful, so the dialog says what is actually wrong.
         advice.push(el('div', { class: 'banner err', text: lv.nominal.note }));
-        const centreIt = el('button', { class: 'btn', text: `Move the requirement to ${fmt(lv.nominal.mean - (a.upper - a.lower) / 2, 4)} … ${fmt(lv.nominal.mean + (a.upper - a.lower) / 2, 4)} mm` });
+        const centreIt = el('button', { class: 'btn', text: tfmt('Move the requirement to {from} … {to} mm', { from: fmt(lv.nominal.mean - (a.upper - a.lower) / 2, 4), to: fmt(lv.nominal.mean + (a.upper - a.lower) / 2, 4) }) });
         centreIt.addEventListener('click', () => {
           const width = (stack.upper - stack.lower) / 2;
           stack.lower = lv.nominal.mean - width;
@@ -3448,9 +3461,9 @@ class App {
         advice.push(el('div', { class: 'dx-item' }, [centreIt,
           el('div', { class: 'hint', text: 'Only if the requirement was the thing entered wrongly. If the requirement is real, a dimension has to move instead.' })]));
       } else {
-        if (lv.centring) advice.push(el('div', { class: 'banner warn', text: `${lv.centring.note} Move a nominal by ${fmt(lv.centring.move, 4)} mm.` }));
+        if (lv.centring) advice.push(el('div', { class: 'banner warn', text: tfmt('{note} Move a nominal by {mm} mm.', { note: lv.centring.note, mm: fmt(lv.centring.move, 4) }) }));
         if (lv.uniform?.possible) {
-          const apply = el('button', { class: 'btn', text: `Scale every open tolerance by ×${lv.uniform.factor.toFixed(3)}` });
+          const apply = el('button', { class: 'btn', text: tfmt('Scale every open tolerance by ×{factor}', { factor: lv.uniform.factor.toFixed(3) }) });
           apply.addEventListener('click', () => {
             for (const l of stack.links) if (!l.fixed) { l.plus *= lv.uniform.factor; l.minus *= lv.uniform.factor; }
             commit('Tighten the stack'); draw();
@@ -3480,7 +3493,7 @@ class App {
             commit('Allocate tolerances'); draw();
           });
           advice.push(el('div', { class: 'dx-item' }, [b,
-            el('div', { class: 'hint', text: `Sizes every band from the requirement, scaled with the dimension: ${alloc.filter(x => x.tol != null).map(x => `${x.label} ±${fmt(x.tol, 4)}`).join(', ')}.` })]));
+            el('div', { class: 'hint', text: tfmt('Sizes every band from the requirement, scaled with the dimension: {bands}.', { bands: alloc.filter(x => x.tol != null).map(x => `${x.label} ±${fmt(x.tol, 4)}`).join(', ') }) })]));
         }
       }
       host.appendChild(section('What to change', advice, true, { icon: 'bulb' }));
@@ -3525,7 +3538,7 @@ class App {
       clear(host);
       const table = Tol.fitTable(D);
       if (!table.length) {
-        host.appendChild(el('div', { class: 'banner warn', text: `ISO 286 is tabulated to 500 mm. ${fmt(D)} mm is outside it, so there is no standard answer to give.` }));
+        host.appendChild(el('div', { class: 'banner warn', text: tfmt('ISO 286 is tabulated to 500 mm. {mm} mm is outside it, so there is no standard answer to give.', { mm: fmt(D) }) }));
         return;
       }
       host.append(
@@ -3546,15 +3559,15 @@ class App {
             el('span', { class: 'mono', text: `${f.hole.upper >= 0 ? '+' : ''}${f.hole.upper.toFixed(3)} / ${f.hole.lower >= 0 ? '+' : ''}${f.hole.lower.toFixed(3)}` }),
             el('span', { class: 'mono', text: `${f.shaft.upper >= 0 ? '+' : ''}${f.shaft.upper.toFixed(3)} / ${f.shaft.lower >= 0 ? '+' : ''}${f.shaft.lower.toFixed(3)}` }),
             el('span', { class: 'mono', text: f.kind === 'interference'
-              ? `${Math.abs(f.maxClearance).toFixed(3)} to ${Math.abs(f.minClearance).toFixed(3)} tight`
-              : `${f.minClearance.toFixed(3)} to ${f.maxClearance.toFixed(3)}` }),
+              ? tfmt('{p1} to {p2} tight', { p1: Math.abs(f.maxClearance).toFixed(3), p2: Math.abs(f.minClearance).toFixed(3) })
+              : tfmt('{min} to {max}', { min: f.minClearance.toFixed(3), max: f.maxClearance.toFixed(3) }) }),
           ])),
         ]),
-        el('div', { class: 'hint', text: `IT6 at this size is ${fmt(Tol.itGrade(6, D) * 1000, 0)} µm, IT7 ${fmt(Tol.itGrade(7, D) * 1000, 0)} µm, IT11 ${fmt(Tol.itGrade(11, D) * 1000, 0)} µm. Grades widen with size, which is why a fit is a letter and a grade rather than a number.` }),
+        el('div', { class: 'hint', text: tfmt('IT6 at this size is {it6} µm, IT7 {it7} µm, IT11 {it11} µm. Grades widen with size, which is why a fit is a letter and a grade rather than a number.', { it6: fmt(Tol.itGrade(6, D) * 1000, 0), it7: fmt(Tol.itGrade(7, D) * 1000, 0), it11: fmt(Tol.itGrade(11, D) * 1000, 0) }) }),
         el('div', { class: 'banner warn', text: 'Hole-basis fits: the hole is the H member and the shaft carries the deviation, because a reamer or a drill is a fixed size and a shaft can be turned to anything. Values are the published ISO 286-1 tables, exact, not interpolated.' }),
       );
       if (holes.length) {
-        host.appendChild(el('div', { class: 'hint', text: `The selected body has ${holes.length} recognised hole${holes.length === 1 ? '' : 's'}; the largest is ${fmt(holes[0].diameter, 3)} mm.` }));
+        host.appendChild(el('div', { class: 'hint', text: tfmt('The selected body has {n} recognised holes; the largest is {mm} mm.', { n: holes.length, mm: fmt(holes[0].diameter, 3) }) }));
       }
     };
     draw();
@@ -3604,10 +3617,10 @@ class App {
 
       if (!r.ok) {
         statusLine.textContent = r.summary;
-        diffHost.appendChild(el('div', { class: 'banner err', text: `${r.errors.length} error${r.errors.length === 1 ? '' : 's'}. Nothing will be applied until they are fixed.` }));
+        diffHost.appendChild(el('div', { class: 'banner err', text: tfmt('{n} errors. Nothing will be applied until they are fixed.', { n: r.errors.length }) }));
         for (const e of r.errors.slice(0, 12)) {
           diffHost.appendChild(el('div', { class: 'spec-err' }, [
-            el('span', { class: 'spec-line', text: e.line ? `line ${e.line}` : 'document' }),
+            el('span', { class: 'spec-line', text: e.line ? tfmt('line {n}', { n: e.line }) : 'document' }),
             el('span', { text: e.message }),
             e.text ? el('code', { text: e.text }) : el('span'),
           ]));
@@ -3647,7 +3660,7 @@ class App {
       statusLine,
       section('What this would do', [diffHost], true, { icon: 'sequence' }),
       el('div', { class: 'banner warn', text: current.lossy.length
-        ? `${current.lossy.length} item${current.lossy.length === 1 ? '' : 's'} cannot be written as text and stay attached to the document instead: ${current.lossy.map(l => `${l.feature} (${l.what})`).join(', ')}. They survive the round trip; they are simply not editable here.`
+        ? tfmt('{count} item cannot be written as text and stay attached to the document instead: {p1}. They survive the round trip; they are simply not editable here.', { count: current.lossy.length, p1: current.lossy.map(l => `${l.feature} (${l.what})`).join(', ') })
         : 'Everything in this document round trips through the text, which the app checks rather than assumes.' }),
     ]);
 
@@ -3662,7 +3675,7 @@ class App {
         { label: 'Copy', run: () => { this.copyText(area.value, 'Spec copied.'); return true; } },
         { label: 'Apply', primary: true, run: () => {
           const r = Spec.reviewSpec(area.value, store.doc);
-          if (!r.ok) { this.flash(`${r.errors.length} error${r.errors.length === 1 ? '' : 's'} in the spec. Nothing applied.`, 'err'); return true; }
+          if (!r.ok) { this.flash(tfmt('{n} errors in the spec. Nothing applied.', { n: r.errors.length }), 'err'); return true; }
           if (r.diff.empty) { this.flash('The text matches the model already.', 'info'); return false; }
           store.batch('Apply the spec', () => {
             const d = store.doc;
@@ -3731,7 +3744,7 @@ class App {
       ]));
 
       if (!baseMeta) {
-        host.appendChild(el('div', { class: 'banner err', text: `"${here}" and "${target}" share no saved version, so there is no common ancestor to merge from. A three-way merge without one is guesswork. Save a version on both branches from the same starting point, or restore one branch's version and continue from there.` }));
+        host.appendChild(el('div', { class: 'banner err', text: tfmt('"{here}" and "{target}" share no saved version, so there is no common ancestor to merge from. A three-way merge without one is guesswork. Save a version on both branches from the same starting point, or restore one branch’s version and continue from there.', { here, target }) }));
         return;
       }
       const base = VCS.getVersion(baseMeta.id, { branch: here })?.doc;
@@ -3746,7 +3759,7 @@ class App {
       const sum = Merge.mergeSummary(resolved);
 
       host.append(
-        el('div', { class: 'hint', text: `Common ancestor: "${baseMeta.message || baseMeta.id}" from ${new Date(baseMeta.at).toLocaleString()}. Merging ${theirs[0].message || 'the latest version'} of "${target}" into the document open now.` }),
+        el('div', { class: 'hint', text: tfmt('Common ancestor: "{ancestor}" from {when}. Merging {version} of "{branch}" into the document open now.', { ancestor: baseMeta.message || baseMeta.id, when: new Date(baseMeta.at).toLocaleString(), version: theirs[0].message || t('the latest version'), branch: target }) }),
         el('div', { class: `banner ${sum.clean ? 'ok' : 'warn'}`, text: sum.headline }),
         el('div', { class: 'merge-stats' }, [
           el('div', { class: 'big-stat' }, [el('strong', { text: String(resolved.stats.features) }), el('span', { text: 'features after' })]),
@@ -3757,7 +3770,7 @@ class App {
       );
 
       if (resolved.conflicts.length) {
-        host.appendChild(section(`Conflicts · ${resolved.conflicts.filter(c => !c.pick).length} still open`,
+        host.appendChild(section(tfmt('Conflicts · {count} still open', { count: resolved.conflicts.filter(c => !c.pick).length }),
           resolved.conflicts.map(c => {
             const show = (v) => v == null ? 'deleted' : Array.isArray(v) ? (v.length && typeof v[0] === 'object' ? `${v.length} items` : `[${v.join(', ')}]`) : typeof v === 'object' ? (v.name || 'changed') : String(v);
             const mineBtn = el('button', { class: `btn tiny${picks[c.id] === 'ours' ? ' on' : ''}`, text: `Keep: ${show(c.ours)}` });
@@ -3820,8 +3833,8 @@ class App {
           this.selection.clear();
           this.rebuildNow();
           this.flash(open
-            ? `Merged "${target}" with ${open} conflict${open === 1 ? '' : 's'} left to ${policy === 'ours' ? 'this document' : `"${target}"`}. Undo puts it back.`
-            : `Merged "${target}": ${resolved.stats.fromTheirs} brought in, no conflicts.`, open ? 'warn' : 'ok');
+            ? tfmt('Merged "{target}" with {open} conflict left to {p1}. Undo puts it back.', { target, open, p1: policy === 'ours' ? 'this document' : `"${target}"` })
+            : tfmt('Merged "{target}": {fromTheirs} brought in, no conflicts.', { target, fromTheirs: resolved.stats.fromTheirs }), open ? 'warn' : 'ok');
         } },
         { label: 'Cancel' },
       ],
@@ -3881,7 +3894,7 @@ class App {
           el('div', { class: 'dv-hist' }, map.histogram.map(b => el('div', {
             class: `dv-bin ${b.to <= -map.tolerance ? 'under' : b.from >= map.tolerance ? 'over' : 'inside'}`,
             style: `height:${Math.max(1, (b.count / maxBin) * 100).toFixed(1)}%`,
-            title: `${fmt(b.from, 4)} to ${fmt(b.to, 4)} mm: ${b.count} samples`,
+            title: tfmt('{from} to {to} mm: {n} samples', { from: fmt(b.from, 4), to: fmt(b.to, 4), n: b.count }),
           }))),
           el('div', { class: 'dv-axis' }, [
             el('span', { text: `${fmt(map.histogram[0].from, 3)} mm` }),
@@ -3891,7 +3904,7 @@ class App {
           el('div', { class: 'hint', text: 'Negative is inside the model, positive is outside it. A symmetric spread around zero is tessellation. One tall bar off centre is a moved or mis-sized feature. Two separated humps usually mean a fillet or a chamfer that is present in one and not the other.' }),
         ], true, { icon: 'deviation' }),
         section('Measurement', [kv([
-          ['Samples', `${map.samples.toLocaleString()} points in ${ms} ms`],
+          ['Samples', tfmt('{p1} points in {ms} ms', { p1: map.samples.toLocaleString(), ms })],
           ['Incoming triangles', map.candidateTriangles.toLocaleString()],
           ['Model triangles', map.referenceTriangles.toLocaleString()],
           ['Tolerance band', `±${fmt(map.tolerance, 4)} mm`],
@@ -3913,7 +3926,7 @@ class App {
 
     modal({
       title: 'Compare with a mesh', icon: 'deviation', wide: true, size: 'tall',
-      subtitle: `${meshes.length} imported mesh${meshes.length === 1 ? '' : 'es'} · ${models.length} modelled bod${models.length === 1 ? 'y' : 'ies'}`,
+      subtitle: tfmt('{meshes} imported meshes · {models} modelled bodies', { meshes: meshes.length, models: models.length }),
       body: host,
       actions: [{ label: 'Close', primary: true }],
     });
@@ -3942,7 +3955,7 @@ class App {
         title: 'Design intent', icon: 'file-import',
         subtitle: filename,
         body: el('div', {}, [
-          el('div', { class: 'banner err', text: `${r.errors.length} problem${r.errors.length === 1 ? '' : 's'} stopped this file importing.` }),
+          el('div', { class: 'banner err', text: tfmt('{n} problems stopped this file importing.', { n: r.errors.length }) }),
           ...r.errors.slice(0, 10).map(e => el('div', { class: 'dx-item', text: e })),
         ]),
         actions: [{ label: 'Close', primary: true }],
@@ -3960,7 +3973,7 @@ class App {
       ]),
       el('div', { class: `banner ${check.ok ? 'ok' : 'warn'}`, text: check.ok
         ? 'Everything in the file came back unchanged: the round trip is lossless on this document.'
-        : `${check.differences.length} thing${check.differences.length === 1 ? '' : 's'} did not survive the trip exactly.` }),
+        : tfmt('{count} thing did not survive the trip exactly.', { count: check.differences.length }) }),
       ...(check.ok ? [] : check.differences.slice(0, 10).map(d => el('div', { class: 'dx-item warn', text: d }))),
       ...r.notes.slice(0, 8).map(n => el('div', { class: 'dx-item', text: n })),
       section('Features', [el('div', {}, r.doc.features.map(f => el('div', { class: 'diff-row' }, [
@@ -3980,7 +3993,7 @@ class App {
           store.load(r.doc);
           this.selection.clear();
           this.rebuildNow();
-          this.flash(`Imported ${r.doc.features.length} features from design intent.`, 'ok');
+          this.flash(tfmt('Imported {n} features from design intent.', { n: r.doc.features.length }), 'ok');
         } },
         { label: 'Cancel' },
       ],
@@ -4034,7 +4047,7 @@ class App {
           el('h4', { text: 'What it would build' }),
           el('ul', {}, r.features.map(f => el('li', {
             text: `${f.name} (${CATALOG[f.type].label})` +
-              (f.inputs.length ? ` from ${f.inputs.length} input${f.inputs.length === 1 ? '' : 's'}` : '') +
+              (f.inputs.length ? tfmt(' from {count} input', { count: f.inputs.length }) : '') +
               `: ${Object.entries(f.params).filter(([, v]) => v !== undefined)
                 .map(([k, v]) => `${k} ${v}`).join(', ')}`,
           }))),
@@ -4048,7 +4061,7 @@ class App {
       }
       if (r.unknown.length) {
         out.appendChild(el('div', { class: 'banner warn', text:
-          `Ignored: ${r.unknown.join(', ')}. This reads a vocabulary rather than English, so those words had no effect. Nothing was guessed from them.` }));
+          tfmt('Ignored: {words}. This reads a vocabulary rather than free language, so those words had no effect. Nothing was guessed from them.', { words: r.unknown.join(', ') }) }));
       }
       for (const n of r.notes) out.appendChild(el('div', { class: 'dx-item', text: n }));
     };
@@ -4070,7 +4083,7 @@ class App {
       this.selection.clear();
       this.selection.add(r.features.at(-1).id);
       this.rebuildNow();
-      this.flash(`${r.understood[0]}. Ctrl Z puts it back.`, 'ok', 4200);
+      this.flash(tfmt('{readback}. Ctrl Z puts it back.', { readback: r.understood[0] }), 'ok', 4200);
       closeModal();
     };
 
@@ -4079,7 +4092,7 @@ class App {
       el('p', { class: 'hint', text: 'A grammar, not a language model. It recognises shapes, numbers, units, thread callouts and counts, and refuses anything outside that vocabulary rather than guessing. Everything it builds is a normal feature you can edit, drag and drive from a parameter afterwards.' }),
       input,
       targetName
-        ? el('div', { class: 'hint', text: `"${targetName}" is selected, so a hole will be cut from it.` })
+        ? el('div', { class: 'hint', text: tfmt('"{name}" is selected, so a hole will be cut from it.', { name: targetName }) })
         : el('div', { class: 'hint', text: 'Nothing is selected, so a hole would arrive as a body to subtract yourself.' }),
       out,
       section('Things it understands', [
@@ -4164,7 +4177,7 @@ class App {
 
         section('Tightening', [
           checkbox('Lubricated thread', lubricated, (v) => { lubricated = v; draw(); }),
-          el('div', { class: 'banner ok', text: `${s.torqueNm} N·m to reach ${(s.preloadN / 1000).toFixed(1)} kN of preload.` }),
+          el('div', { class: 'banner ok', text: tfmt('{torque} N·m to reach {preload} kN of preload.', { torque: s.torqueNm, preload: (s.preloadN / 1000).toFixed(1) }) }),
           el('div', { class: 'hint', text: s.torqueBasis }),
         ], true, { icon: 'rotate' }),
 
@@ -4173,12 +4186,12 @@ class App {
           numRow('Number of bolts', count, (v) => { count = Math.max(1, Math.round(v)); draw(); }),
           checkbox('Loaded in shear rather than tension', shear, (v) => { shear = v; draw(); }),
           el('div', { class: `banner ${sev}`, text:
-            `${j.per} N per bolt against ${j.allowableN} N allowable in ${j.mode} at safety factor ${j.safety}. ` +
+            tfmt('{per} N per bolt against {allowable} N allowable in {mode} at safety factor {safety}. ', { per: j.per, allowable: j.allowableN, mode: j.mode, safety: j.safety }) +
             `${(j.utilisation * 100).toFixed(0)}% used. ${j.verdict}.` }),
           (() => {
             const smallest = Fast.sizeFor({ load, count, cls, shear, safety: 2 });
             const b = el('button', { class: 'btn', text: smallest
-              ? `Smallest class ${cls} bolt that holds this: ${smallest.size}`
+              ? tfmt('Smallest class {cls} bolt that holds this: {size}', { cls, size: smallest.size })
               : 'No bolt in this library carries that load' });
             if (smallest) b.addEventListener('click', () => { size = smallest.size; draw(); });
             return b;
@@ -4251,9 +4264,9 @@ class App {
               try {
                 i.fix.apply(store);
                 this.rebuildNow();
-                this.flash(`${i.fix.label}. Ctrl Z puts it back.`, 'ok', 4200);
+                this.flash(tfmt('{repair}. Ctrl Z puts it back.', { repair: i.fix.label }), 'ok', 4200);
                 draw();
-              } catch (err) { this.flash(`Could not apply that: ${err.message}`, 'err'); }
+              } catch (err) { this.flash(tfmt('Could not apply that: {error}', { error: err.message }), 'err'); }
             });
             rows.push(b);
           }
@@ -4304,7 +4317,7 @@ class App {
       clear(host);
       host.append(
         el('div', { class: `banner ${st.controlled ? 'ok' : 'warn'}`, text: st.controlled
-          ? `Installed. ${st.files} files, ${(st.cachedBytes / 1024 / 1024).toFixed(1)} MB on this machine. Turn the network off and reload: it will still open.`
+          ? tfmt('Installed. {files} files, {p1} MB on this machine. Turn the network off and reload: it will still open.', { files: st.files, p1: (st.cachedBytes / 1024 / 1024).toFixed(1) })
           : st.supported
             ? (this._offline?.ok
               ? 'Installing. Reload once and the offline copy takes over; nothing else changes.'
@@ -4315,7 +4328,7 @@ class App {
           el('ul', {}, Offline.NETWORK_FACTS.map(f => el('li', { text: f }))),
         ], true, { icon: 'info' }),
 
-        section(`What it keeps here · ${(total / 1024).toFixed(0)} kB`, [
+        section(tfmt('What it keeps here · {p1} kB', { p1: (total / 1024).toFixed(0) }), [
           el('div', { class: 'fit-table' }, [
             el('div', { class: 'fit-head' }, ['Stored', 'What it is', 'Size', '', ''].map(t => el('span', { text: t }))),
             ...rows.map(r => el('div', { class: 'fit-row' }, [
@@ -4343,12 +4356,12 @@ class App {
             'Your saved versions, standards, decisions, macros and the autosaved document all go. Files you exported are untouched. This cannot be undone.',
             () => {
               const gone = Offline.forgetEverything();
-              this.flash(`Removed ${gone.length} stored item${gone.length === 1 ? '' : 's'}. Reload to start clean.`, 'ok', 5000);
+              this.flash(tfmt('Removed {n} stored items. Reload to start clean.', { n: gone.length }), 'ok', 5000);
             }, { danger: true, yes: 'Delete it all' });
         } },
         { label: 'Remove the offline copy', run: async () => {
           const r = await Offline.uninstall();
-          this.flash(`Offline copy removed (${r.caches} cache${r.caches === 1 ? '' : 's'}). The app will load from the network again.`, 'ok', 5000);
+          this.flash(tfmt('Offline copy removed ({n} caches). The app will load from the network again.', { n: r.caches }), 'ok', 5000);
           return true;
         } },
         { label: 'Close', primary: true },
@@ -4466,7 +4479,7 @@ function section2D(sec, size = 300) {
   svg.appendChild(g);
   return el('div', { class: 'section-view' }, [
     svg,
-    el('div', { class: 'hint', text: `${fmt(w)} × ${fmt(h)} mm. The dot is the centroid; the solid line is the strong principal axis and the dashed one the weak.` }),
+    el('div', { class: 'hint', text: tfmt('{w} × {h} mm. The dot is the centroid; the solid line is the strong principal axis and the dashed one the weak.', { w: fmt(w), h: fmt(h) }) }),
   ]);
 }
 
@@ -4492,5 +4505,5 @@ try {
 } catch (err) {
   console.error(err);
   const m = document.getElementById('bootMsg');
-  if (m) { m.textContent = `Startup failed: ${err.message}`; m.style.color = '#ff6b6b'; }
+  if (m) { m.textContent = tfmt('Startup failed: {error}', { error: err.message }); m.style.color = '#ff6b6b'; }
 }

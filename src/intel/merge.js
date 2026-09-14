@@ -19,6 +19,7 @@
  * of a deleted feature the other side edited. Every case where the answer is
  * genuinely unknown becomes a conflict with both candidates attached.
  */
+import { tfmt } from '../core/i18n.js';
 
 /** A conflict the user has to answer. `pick` is set by `resolve`. */
 function conflict(kind, path, label, ours, theirs, note = '') {
@@ -305,7 +306,7 @@ export function mergeDocuments(base, ours, theirs, { policy = 'ours' } = {}) {
     if (o && !t) {
       // They deleted it. If we also edited it, that is a real question.
       if (b && !same(b, o)) {
-        conflicts.push(conflict('delete', `${id}.exists`, `${o.name}: kept here, deleted there`, o, null,
+        conflicts.push(conflict('delete', `${id}.exists`, tfmt('{name}: kept here, deleted there', { name: o.name }), o, null,
           'One branch deleted this feature while the other edited it.'));
         if (policy !== 'theirs') features.push(o);
       } else if (!b) features.push(o);            // we added it
@@ -313,7 +314,7 @@ export function mergeDocuments(base, ours, theirs, { policy = 'ours' } = {}) {
     }
     if (!o && t) {
       if (b && !same(b, t)) {
-        conflicts.push(conflict('delete', `${id}.exists`, `${t.name}: deleted here, kept there`, null, t,
+        conflicts.push(conflict('delete', `${id}.exists`, tfmt('{name}: deleted here, kept there', { name: t.name }), null, t,
           'One branch deleted this feature while the other edited it.'));
         if (policy === 'theirs') features.push(t);
       } else if (!b) features.push(t);            // they added it
@@ -438,7 +439,7 @@ export function conflictLine(c) {
     if (typeof v === 'object') return v.name || 'changed';
     return String(v);
   };
-  return `${c.label}: here ${show(c.ours)}, there ${show(c.theirs)}`;
+  return tfmt('{label}: here {p1}, there {p2}', { label: c.label, p1: show(c.ours), p2: show(c.theirs) });
 }
 
 export function mergeSummary(result) {
@@ -448,8 +449,8 @@ export function mergeSummary(result) {
   return {
     clean: result.clean,
     headline: result.clean
-      ? `Merged cleanly: ${stats.fromTheirs} feature${stats.fromTheirs === 1 ? '' : 's'} brought in, ${stats.features} total`
-      : `${conflicts.length} conflict${conflicts.length === 1 ? '' : 's'} to answer`,
+      ? tfmt('Merged cleanly: {fromTheirs} feature brought in, {features} total', { fromTheirs: stats.fromTheirs, features: stats.features })
+      : tfmt('{count} conflict to answer', { count: conflicts.length }),
     stats, byKind,
     lines: conflicts.map(conflictLine),
   };

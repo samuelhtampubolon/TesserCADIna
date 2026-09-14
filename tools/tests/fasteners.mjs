@@ -74,7 +74,7 @@ ok('M8 8.8 dry torque is about 31 Nm', near(s.torqueNm, 30.6, 0.2), `${s.torqueN
 ok('which is exactly K*F*d with K = 0.2 and F = 90% of proof',
   near(s.torqueNm, 0.2 * 0.9 * 21228 * 8 / 1000, 0.1));
 ok('it states the formula and the friction assumption',
-  /T = K·F·d/.test(s.torqueBasis) && /K = 0.2/.test(s.torqueBasis) && /nobody can promise/.test(s.torqueBasis));
+  /T = K·F·d/.test(s.torqueBasis) && /K = 0.2/.test(s.torqueBasis) && /tidak bisa dijanjikan siapa pun/.test(s.torqueBasis));
 const lub = F.spec('M8', { lubricated: true });
 ok('lubricating it lowers the torque for the same preload', lub.torqueNm < s.torqueNm, `${lub.torqueNm} vs ${s.torqueNm}`);
 ok('and says it is lubricated', /lubricated/.test(lub.torqueBasis));

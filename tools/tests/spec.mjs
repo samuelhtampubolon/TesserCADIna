@@ -79,9 +79,9 @@ const blocks = text.split('\n\n');
 const trimmed = blocks.filter(b => !b.startsWith('feature cylinder')).join('\n\n');
 review = S.reviewSpec(trimmed, doc);
 ok('deleting a feature another one consumes is caught before it is applied',
-  !review.ok && review.errors.some(e => /which no feature defines/.test(e.message)),
+  !review.ok && review.errors.some(e => /tidak didefinisikan fitur mana pun/.test(e.message)),
   review.errors.map(e => e.message)[0] || 'no error raised');
-ok('and nothing is applied on an error', review.summary.includes('nothing applied'));
+ok('and nothing is applied on an error', review.summary.includes('tidak ada yang diterapkan'));
 // Deleting a leaf feature with nothing pointing at it is fine.
 const leafless = blocks.filter(b => !b.startsWith('feature boolean')).join('\n\n');
 review = S.reviewSpec(leafless, doc);
@@ -92,24 +92,24 @@ ok('deleting a feature nothing depends on just removes it',
 let bad = S.fromSpec('part "X"\nunits mm\nwibble 3\n');
 ok('an unknown keyword is an error with a line number',
   bad.errors.length === 1 && bad.errors[0].line === 3, JSON.stringify(bad.errors[0]));
-ok('and explains what was expected', /Expected part, units/.test(bad.errors[0].message));
+ok('and explains what was expected', /Yang diharapkan: part, units/.test(bad.errors[0].message));
 bad = S.fromSpec('part "X"\nfeature nonsuch "Q"\n');
-ok('an unknown feature type is an error', bad.errors[0].message.startsWith('Unknown feature type'));
+ok('an unknown feature type is an error', /Tipe fitur .* tidak dikenal/.test(bad.errors[0].message));
 ok('and lists some real ones', /box/.test(bad.errors[0].message));
 bad = S.fromSpec('part "X"\n  w = 10\n');
 ok('an orphan indented line is caught', /no feature above it/.test(bad.errors[0].message));
 bad = S.fromSpec('part "X"\nfeature box "A"\n  nonsense\n');
 ok('a malformed feature line is caught', /Expected "key = value"/.test(bad.errors[0].message));
 bad = S.fromSpec('part "X"\nparam 2bad = 5\n');
-ok('an unusable parameter name is rejected', /not a usable parameter name/.test(bad.errors[0].message));
+ok('an unusable parameter name is rejected', /bukan nama parameter yang bisa dipakai/.test(bad.errors[0].message));
 bad = S.fromSpec('part "X"\nparam a = 1\nparam a = 2\n');
-ok('a duplicate parameter is rejected', /defined twice/.test(bad.errors[0].message));
+ok('a duplicate parameter is rejected', /didefinisikan dua kali/.test(bad.errors[0].message));
 bad = S.fromSpec('part "X"\nparam a\n');
 ok('a parameter with no value is rejected', /needs a value/.test(bad.errors[0].message));
 bad = S.fromSpec('part "X"\nfeature box "A" #x1\nfeature box "B" #x1\n');
-ok('two features cannot share an id', /share the id/.test(bad.errors[0].message));
+ok('two features cannot share an id', /memakai id .* yang sama/.test(bad.errors[0].message));
 bad = S.fromSpec('part "X"\nfeature box "A"\n  pos = 1, 2\n');
-ok('a two-component position is rejected', /needs three components/.test(bad.errors[0].message));
+ok('a two-component position is rejected', /butuh tiga komponen/.test(bad.errors[0].message));
 let expr = S.fromSpec('part "X"\nparam w = 50\nfeature box "A"\n  w = w\n  d = w * 2\n  h = 5\n  pos = w / 2, 0, 0\n');
 ok('an expression in a position is accepted', !!expr.doc && expr.errors.length === 0, JSON.stringify(expr.errors));
 ok('and stored verbatim', expr.doc.features[0].transform.pos[0] === 'w / 2', String(expr.doc.features[0].transform.pos[0]));
@@ -130,12 +130,12 @@ ok('errors mean no document at all, rather than half of one', bad.doc === null);
 
 /* ---- warnings, not errors ---- */
 let warn = S.fromSpec('part "X"\nunits furlongs\nfeature box "A"\n  w = 10\n  d = 10\n  h = 10\n');
-ok('an unknown unit warns and keeps mm', warn.doc && warn.doc.meta.units === 'mm' && warn.warnings.some(w => /Unknown unit/.test(w.message)));
+ok('an unknown unit warns and keeps mm', warn.doc && warn.doc.meta.units === 'mm' && warn.warnings.some(w => /tidak dikenal; tetap memakai mm/.test(w.message)));
 warn = S.fromSpec('part "X"\nfeature box "A"\n  w = 10\n  d = 10\n  h = 10\n  material = unobtainium\n');
 ok('an unknown material warns and falls back to steel',
-  warn.doc.features[0].material === 'steel' && warn.warnings.some(w => /Unknown material/.test(w.message)));
+  warn.doc.features[0].material === 'steel' && warn.warnings.some(w => /tidak dikenal; kembali ke baja/.test(w.message)));
 warn = S.fromSpec('part "X"\nfeature box "A"\n  w = 10\n');
-ok('an omitted dimension is defaulted but reported', warn.doc && warn.warnings.some(w => /not given, using the default/.test(w.message)),
+ok('an omitted dimension is defaulted but reported', warn.doc && warn.warnings.some(w => /tidak diberikan, memakai bawaan/.test(w.message)),
   warn.warnings.map(w => w.message).join('; '));
 ok('and the default is the catalogue value', warn.doc.features[0].params.d === 40);
 
@@ -193,7 +193,7 @@ ok('unparseable text is returned untouched rather than destroyed', S.format('wib
 /* ---- the example compiles ---- */
 const ex = S.fromSpec(S.EXAMPLE);
 ok('the worked example parses', !!ex.doc, ex.errors.map(e => `${e.line}: ${e.message}`).join('; '));
-ok('it has the features it advertises', ex.doc.features.length === 2 && ex.doc.features[0].name === 'Plate');
+ok('it has the features it advertises', ex.doc.features.length === 2 && ex.doc.features[0].name === 'Pelat');
 ok('and its expressions reference its parameters', ex.doc.features[1].params.r === 'bolt / 2', String(ex.doc.features[1].params.r));
 ok('the example round trips too', S.roundTrip(ex.doc).ok, S.roundTrip(ex.doc).differences.join(' | '));
 

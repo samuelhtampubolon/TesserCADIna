@@ -5,6 +5,7 @@
  */
 import { el, clear, section, field, checkbox, select, segmented, kv, promptDialog, icon, emptyState, scrubNumber, verb } from './shell.js';
 import { store, catalogOf, MATERIALS, UNITS, uid, toDisplay, fromDisplay } from '../core/doc.js';
+import { t, tfmt } from '../core/i18n.js';
 import { tryEval } from '../core/expr.js';
 import { massProperties } from '../core/rebuild.js';
 import { ANIM_PROPS, EASINGS, SCHEDULE_MODES, MOTOR_TYPES } from '../sim/sim.js';
@@ -17,9 +18,9 @@ export function renderRightPanel(app) {
   const host = clear(document.getElementById('rightBody'));
   const title = document.getElementById('rightTitle');
 
-  if (app.workspace === 'draft') { title.textContent = 'Drafting'; renderDraft(app, host); return; }
-  if (app.workspace === 'sim') { title.textContent = 'Simulation'; renderSim(app, host); return; }
-  title.textContent = 'Properties';
+  if (app.workspace === 'draft') { title.textContent = t('Drafting'); renderDraft(app, host); return; }
+  if (app.workspace === 'sim') { title.textContent = t('Simulation'); renderSim(app, host); return; }
+  title.textContent = t('Properties');
   renderModel(app, host);
 }
 
@@ -64,7 +65,7 @@ function vecRow(label, values, scope, onCommit, unit) {
   const box = el('div', { class: 'triplet-axis' });
   ['X', 'Y', 'Z'].forEach((ax, i) => {
     const w = exprInput(values[i], scope, (v) => { const next = [...values]; next[i] = v; onCommit(next); }, { unit, hint: false });
-    w.firstChild.title = `${label} ${ax} — accepts an expression`;
+    w.firstChild.title = tfmt('{label} {ax} — accepts an expression', { label, ax });
     box.appendChild(el('div', { class: 'axis-field' }, [
       el('span', { class: 'axis-label', dataset: { axis: ax }, text: ax }),
       w,
@@ -236,7 +237,7 @@ function doctorSection(app) {
   rows.push(el('div', { class: 'hint', text: PROCESSES[proc]?.note || '' }));
 
   if (!r.issues.length) {
-    rows.push(el('div', { class: 'banner ok', text: `All ${r.checked} checks pass for ${PROCESSES[proc]?.label}.` }));
+    rows.push(el('div', { class: 'banner ok', text: tfmt('All {n} checks pass for {process}.', { n: r.checked, process: PROCESSES[proc]?.label }) }));
   } else {
     for (const issue of r.issues.slice(0, 12)) {
       const sev = issue.severity === 3 ? 'err' : issue.severity === 2 ? 'warn' : 'info';
@@ -266,7 +267,7 @@ function doctorSection(app) {
       rows.push(el('div', { class: `dx-item ${sev}` }, body));
     }
     if (r.issues.length > 12) {
-      rows.push(el('div', { class: 'hint', text: `${r.issues.length - 12} more findings. Open the full report for all of them.` }));
+      rows.push(el('div', { class: 'hint', text: tfmt('{n} more findings. Open the full report for all of them.', { n: r.issues.length - 12 }) }));
     }
   }
 
@@ -697,7 +698,7 @@ function renderSim(app, host) {
   if (f) {
     const tr = sim.tracks[f.id] || {};
     const rows = [
-      el('div', { class: 'hint', text: `Keyframes for “${f.name}” at t = ${s.time.toFixed(2)} s. Values are offsets from the modelled position.` }),
+      el('div', { class: 'hint', text: tfmt('Keyframes for “{name}” at t = {t} s. Values are offsets from the modelled position.', { name: f.name, t: s.time.toFixed(2) }) }),
       el('div', { class: 'btn-row' }, [
         el('button', { class: 'btn sm primary', text: '◆ Key pose', title: 'Store the current pose as keyframes', onclick: () => { s.keyCurrentPose(f.id); app.refreshUI(); } }),
         el('button', { class: 'btn sm', text: 'Clear all', onclick: () => { s.clearTracks(f.id); app.refreshSim(); app.refreshUI(); } }),
@@ -748,7 +749,7 @@ function renderSim(app, host) {
   if (f) {
     const b = dyn.bodies[f.id] || {};
     dynRows.push(el('hr', { style: { border: 0, borderTop: '1px solid var(--line-soft)' } }));
-    dynRows.push(el('div', { class: 'hint', text: `Body settings for “${f.name}”` }));
+    dynRows.push(el('div', { class: 'hint', text: tfmt('Body settings for “{name}”', { name: f.name }) }));
     dynRows.push(checkbox('Include in simulation', b.enabled !== false && !!dyn.bodies[f.id], (v) => setBody(app, f.id, { enabled: v })));
     dynRows.push(checkbox('Static (immovable)', !!b.static, (v) => setBody(app, f.id, { static: v })));
     dynRows.push(field('Mass (kg)', numField(b.mass ?? 1, 0.001, 100000, 0.1, (v) => setBody(app, f.id, { mass: v }))));

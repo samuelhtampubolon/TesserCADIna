@@ -141,7 +141,7 @@ check('tiny-feature', (ctx, add) => {
       featureId: b.feature.id,
       title: tfmt('{name} is {min}mm at its thinnest', { name: b.feature.name, min: fmt(min) }),
       detail: `${p.label} holds about ${ctx.limits.minFeature}mm.`,
-      why: `Below the process minimum the feature either disappears or arrives out of tolerance. This measures the body's overall bounding box, not its true minimum wall, so treat it as a prompt to look rather than a verdict.`,
+      why: 'Below the process minimum the feature either disappears or arrives out of tolerance. This measures the body’s overall bounding box, not its true minimum wall, so treat it as a prompt to look rather than a verdict.',
     });
   }
 });
@@ -159,10 +159,10 @@ check('thin-wall', (ctx, add) => {
       severity: SEVERITY.warn,
       featureId: f.id,
       title: tfmt('{name} has a {wall}mm wall', { name: f.name, wall: fmt(wall) }),
-      detail: `${p.label} needs at least ${ctx.limits.minWall}mm.`,
+      detail: tfmt('{process} needs at least {mm}mm.', { process: p.label, mm: ctx.limits.minWall }),
       why: 'A wall under the process minimum will not fill, will not bond between layers, or will blow through when machined.',
       fix: {
-        label: `Open the wall to ${ctx.limits.minWall}mm`,
+        label: tfmt('Open the wall to {mm}mm', { mm: ctx.limits.minWall }),
         apply: (store) => store.edit('Thicken wall', (d) => {
           const t = d.features.find(x => x.id === f.id);
           if (t) t.params.ri = round2(num(ctx, t.params.ro) - ctx.limits.minWall);
@@ -235,8 +235,8 @@ check('interference', (ctx, add) => {
       severity: c.fraction > 0.02 ? SEVERITY.warn : SEVERITY.note,
       featureId: c.a.feature.id,
       title: tfmt('{a} and {b} share {vol} mm³', { a: c.a.feature.name, b: c.b.feature.name, vol: fmt(c.volume) }),
-      detail: `They genuinely intersect, centred at ${fmt(c.at.x)}, ${fmt(c.at.y)}, ${fmt(c.at.z)}` +
-        (c.fraction > 0 ? ` — ${(c.fraction * 100).toFixed(1)}% of the smaller body.` : '.'),
+      detail: tfmt('They genuinely intersect, centred at {x}, {y}, {z}', { x: fmt(c.at.x), y: fmt(c.at.y), z: fmt(c.at.z) }) +
+        (c.fraction > 0 ? tfmt(' — {p1}% of the smaller body.', { p1: (c.fraction * 100).toFixed(1) }) : '.'),
       why: 'Two solids occupying the same space is either an assembly clash or a boolean that was never applied. This is the measured intersection volume, not a bounding-box guess, so it is a real overlap.',
       fix: {
         label: 'Union them into one body',
@@ -267,7 +267,7 @@ check('unused-param', (ctx, add) => {
     add({
       severity: SEVERITY.note,
       title: tfmt('Parameter “{name}” drives nothing', { name: p.name }),
-      detail: `Defined as ${p.value}, referenced by no feature.`,
+      detail: tfmt('Defined as {value}, referenced by no feature.', { value: p.value }),
       why: 'Either a dimension was meant to be driven by it and is not, or it is left over from an earlier revision. Both mislead the next person to open the file.',
       fix: {
         label: 'Delete the parameter',
@@ -293,7 +293,7 @@ check('hardcoded', (ctx, add) => {
   add({
     severity: SEVERITY.note,
     title: tfmt('{n} features use raw numbers, not parameters', { n: loose.length }),
-    detail: `The document defines ${ctx.doc.params.length} parameter${ctx.doc.params.length === 1 ? '' : 's'} that these features ignore.`,
+    detail: tfmt('The document defines {n} parameters that these features ignore.', { n: ctx.doc.params.length }),
     why: 'The point of a feature tree is that changing one number changes everything that depends on it. Dimensions typed in by hand look identical and do not move.',
   });
 });
@@ -400,7 +400,10 @@ function diagnoseFailure(f, message, ctx) {
     const suppressed = f.inputs.map(id => ctx.doc.features.find(x => x.id === id)).filter(x => x && x.suppressed);
     if (suppressed.length) {
       return {
-        why: `Its input ${suppressed.map(x => `“${x.name}”`).join(' and ')} ${suppressed.length === 1 ? 'is' : 'are'} suppressed, so this feature has nothing to work on. The intent is intact; the input is just switched off.`,
+        why: tfmt(suppressed.length === 1
+          ? 'Its input {names} is suppressed, so this feature has nothing to work on. The intent is intact; the input is just switched off.'
+          : 'Its inputs {names} are suppressed, so this feature has nothing to work on. The intent is intact; the input is just switched off.',
+        { names: suppressed.map(x => `“${x.name}”`).join(t(' and ')) }),
         fix: {
           label: `Unsuppress ${suppressed.map(x => x.name).join(', ')}`,
           apply: (store) => store.edit('Restore suppressed input', (d) => {
@@ -434,7 +437,7 @@ function diagnoseFailure(f, message, ctx) {
       return {
         why: 'The drawing entities this feature was linked to are gone, but the Draft workspace still holds closed profiles it could use instead.',
         fix: {
-          label: `Relink to the ${closed.length} closed profile${closed.length === 1 ? '' : 's'} in Draft`,
+          label: tfmt('Relink to the {n} closed profiles in Draft', { n: closed.length }),
           apply: (store) => store.edit('Relink profile', (d) => {
             const t = d.features.find(x => x.id === f.id);
             if (t) t.profile = closed.map(e => e.id);

@@ -67,7 +67,7 @@ const body = `/**
  * is worse than one that is a deploy behind, and the fetch below still
  * refreshes the cache in the background, so the next open is current.
  */
-const VERSION = 'tessercad-${version}';
+const VERSION = 'tessercadina-${version}';
 const FILES = ${JSON.stringify(files, null, 2).replace(/\n/g, '\n')};
 
 self.addEventListener('install', (e) => {
@@ -83,7 +83,7 @@ self.addEventListener('install', (e) => {
 self.addEventListener('activate', (e) => {
   e.waitUntil((async () => {
     for (const key of await caches.keys()) {
-      if (key !== VERSION && key.startsWith('tessercad-')) await caches.delete(key);
+      if (key !== VERSION && key.startsWith('tessercadina-')) await caches.delete(key);
     }
     await self.clients.claim();
   })());

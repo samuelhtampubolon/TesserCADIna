@@ -26,6 +26,7 @@
  */
 import { CATALOG, MATERIALS, UNITS, makeFeature, newDocument, uid } from '../core/doc.js';
 import { buildScope, tryEval } from '../core/expr.js';
+import { tfmt } from '../core/i18n.js';
 
 export const SPEC_VERSION = 1;
 const INDENT = '  ';
@@ -106,7 +107,7 @@ export function toSpec(doc) {
   for (const f of doc.features || []) {
     w('');
     const cat = CATALOG[f.type];
-    if (!cat) lossy.push({ feature: f.name, what: 'type', note: `Unknown feature type "${f.type}"; it is written out but will not rebuild.` });
+    if (!cat) lossy.push({ feature: f.name, what: 'type', note: tfmt('Unknown feature type "{type}"; it is written out but will not rebuild.', { type: f.type }) });
     w(`feature ${f.type} ${quote(f.name)} #${f.id}`);
 
     // Parameters in catalogue order, so two documents of the same type diff
@@ -132,8 +133,8 @@ export function toSpec(doc) {
 
     if (f.data?.positions?.length) {
       const n = Math.round(f.data.positions.length / 9);
-      w(`${INDENT}mesh ${n} triangles   # payload kept in the document, not in the text`);
-      lossy.push({ feature: f.name, what: 'mesh', note: `${n} triangles stay attached to the document; the text records only that they exist.` });
+      w(tfmt('{INDENT}mesh {n} triangles   # payload kept in the document, not in the text', { INDENT, n }));
+      lossy.push({ feature: f.name, what: 'mesh', note: tfmt('{n} triangles stay attached to the document; the text records only that they exist.', { n }) });
     }
   }
   w('');
@@ -249,11 +250,11 @@ export function fromSpec(text, { base = null, keepIds = true } = {}) {
       if (key === 'pos' || key === 'rot' || key === 'scale') {
         const a = Array.isArray(val) ? val : [val];
         const usable = a.every(x => (typeof x === 'number' && Number.isFinite(x)) || (typeof x === 'string' && x.trim()));
-        if (a.length !== 3 || !usable) { fail(i, `${key} needs three components, each a number or an expression.`); continue; }
+        if (a.length !== 3 || !usable) { fail(i, tfmt('{key} needs three components, each a number or an expression.', { key })); continue; }
         current.transform[key] = a;
       } else if (key === 'material') {
         const m = String(val);
-        if (!MATERIALS[m]) warnings.push({ line: i + 1, message: `Unknown material "${m}"; falling back to steel.` });
+        if (!MATERIALS[m]) warnings.push({ line: i + 1, message: tfmt('Unknown material "{material}"; falling back to steel.', { material: m }) });
         current.material = MATERIALS[m] ? m : 'steel';
         const mat = MATERIALS[current.material];
         current.appearance = { ...current.appearance, color: mat.color, metalness: mat.metal, roughness: mat.rough };
@@ -266,7 +267,7 @@ export function fromSpec(text, { base = null, keepIds = true } = {}) {
       } else if (key === 'opacity') {
         current.appearance = { ...current.appearance, opacity: Number(val) };
       } else if (RESERVED.has(key)) {
-        warnings.push({ line: i + 1, message: `"${key}" is reserved and was ignored.` });
+        warnings.push({ line: i + 1, message: tfmt('"{key}" is reserved and was ignored.', { key }) });
       } else {
         current.params[key] = val;
       }
@@ -276,14 +277,14 @@ export function fromSpec(text, { base = null, keepIds = true } = {}) {
     // Top level.
     current = null;
     const m = /^(\w+)\b\s*(.*)$/.exec(line);
-    if (!m) { fail(i, `Cannot read "${line}".`); continue; }
+    if (!m) { fail(i, tfmt('Cannot read "{line}".', { line })); continue; }
     const [, word, rest] = m;
 
     switch (word) {
       case 'part': doc.meta.name = unquote(rest) || 'Untitled'; break;
       case 'units': {
         const u = unquote(rest);
-        if (!UNITS[u]) { warnings.push({ line: i + 1, message: `Unknown unit "${u}"; keeping mm.` }); break; }
+        if (!UNITS[u]) { warnings.push({ line: i + 1, message: tfmt('Unknown unit "{u}"; keeping mm.', { u }) }); break; }
         doc.meta.units = u;
         break;
       }
@@ -293,9 +294,9 @@ export function fromSpec(text, { base = null, keepIds = true } = {}) {
         const eq = rest.indexOf('=');
         if (eq < 0) { fail(i, 'A parameter needs a value: param name = 10.'); break; }
         const name = unquote(rest.slice(0, eq));
-        if (!isIdent(name)) { fail(i, `"${name}" is not a usable parameter name. Letters, digits and underscore, starting with a letter.`); break; }
-        if (RESERVED_NAMES.has(name)) { fail(i, `"${name}" is reserved by the language and cannot name a parameter.`); break; }
-        if (seenParams.has(name)) { fail(i, `Parameter "${name}" is defined twice.`); break; }
+        if (!isIdent(name)) { fail(i, tfmt('"{name}" is not a usable parameter name. Letters, digits and underscore, starting with a letter.', { name })); break; }
+        if (RESERVED_NAMES.has(name)) { fail(i, tfmt('"{name}" is reserved by the language and cannot name a parameter.', { name })); break; }
+        if (seenParams.has(name)) { fail(i, tfmt('Parameter "{name}" is defined twice.', { name })); break; }
         seenParams.add(name);
         doc.params.push({ id: uid('p'), name, value: parseValue(rest.slice(eq + 1)), note: comment });
         break;
@@ -304,10 +305,10 @@ export function fromSpec(text, { base = null, keepIds = true } = {}) {
         const fm = /^([A-Za-z][\w-]*)\s+(".*?"|\S+)?\s*(?:#(\S+))?\s*$/.exec(rest);
         if (!fm) { fail(i, 'A feature needs a type and a name: feature box "Plate".'); break; }
         const type = fm[1];
-        if (!CATALOG[type]) { fail(i, `Unknown feature type "${type}". Known types: ${Object.keys(CATALOG).slice(0, 8).join(', ')}, ...`); break; }
+        if (!CATALOG[type]) { fail(i, tfmt('Unknown feature type "{type}". Known types: {p1}, ...', { type, p1: Object.keys(CATALOG).slice(0, 8).join(', ') })); break; }
         const name = fm[2] ? unquote(fm[2]) : CATALOG[type].label;
         const wantId = keepIds && fm[3] ? fm[3] : null;
-        if (wantId && seenIds.has(wantId)) { fail(i, `Two features share the id #${wantId}.`); break; }
+        if (wantId && seenIds.has(wantId)) { fail(i, tfmt('Two features share the id #{wantId}.', { wantId })); break; }
         const f = makeFeature(type, { name });
         // makeFeature seeds catalogue defaults; a spec is a complete statement
         // of the feature, so start empty and take only what the text says.
@@ -322,7 +323,7 @@ export function fromSpec(text, { base = null, keepIds = true } = {}) {
         break;
       }
       default:
-        fail(i, `"${word}" is not a spec keyword. Expected part, units, author, notes, param or feature.`);
+        fail(i, tfmt('"{word}" is not a spec keyword. Expected part, units, author, notes, param or feature.', { word }));
     }
   }
 
@@ -333,7 +334,7 @@ export function fromSpec(text, { base = null, keepIds = true } = {}) {
     for (const [k, v] of Object.entries(cat?.params || {})) {
       if (!(k in f.params)) {
         f.params[k] = structuredClone(v);
-        warnings.push({ line: 0, message: `${f.name}: ${k} not given, using the default ${value(v)}.` });
+        warnings.push({ line: 0, message: tfmt('{feature}: {field} not given, using the default {value}.', { feature: f.name, field: k, value: value(v) }) });
       }
     }
   }
@@ -352,7 +353,7 @@ export function fromSpec(text, { base = null, keepIds = true } = {}) {
       // check things that actually look like arithmetic on names.
       if (!/[A-Za-z_]/.test(v) && !/\d/.test(v)) return;
       const r = tryEval(v, scope);
-      if (!r.ok) warnings.push({ line: 0, message: `${f.name}: ${label} "${v}" does not evaluate (${r.error}).` });
+      if (!r.ok) warnings.push({ line: 0, message: tfmt('{feature}: {field} "{value}" does not evaluate ({error}).', { feature: f.name, field: label, value: v, error: r.error }) });
     };
     const cat = CATALOG[f.type];
     for (const [k, v] of Object.entries(f.params || {})) {
@@ -366,7 +367,7 @@ export function fromSpec(text, { base = null, keepIds = true } = {}) {
   const have = new Set(doc.features.map(f => f.id));
   for (const f of doc.features) {
     const missing = (f.inputs || []).filter(id => !have.has(id));
-    if (missing.length) errors.push({ line: 0, text: f.name, message: `${f.name} refers to ${missing.map(x => '#' + x).join(', ')}, which no feature defines.` });
+    if (missing.length) errors.push({ line: 0, text: f.name, message: tfmt('{feature} refers to {refs}, which no feature defines.', { feature: f.name, refs: missing.map(x => '#' + x).join(', ') }) });
   }
 
   return { doc: errors.length ? null : doc, errors, warnings };
@@ -478,7 +479,7 @@ export function reviewSpec(text, doc) {
   const before = toSpec(doc).text;
   const diff = specDiff(before, text);
   if (!parsed.doc) {
-    return { ok: false, errors: parsed.errors, warnings: parsed.warnings, diff, summary: `${parsed.errors.length} error${parsed.errors.length === 1 ? '' : 's'}; nothing applied.` };
+    return { ok: false, errors: parsed.errors, warnings: parsed.warnings, diff, summary: tfmt('{count} error; nothing applied.', { count: parsed.errors.length }) };
   }
   // Compare canonically: `toSpec` writes parameters in catalogue order, so a
   // document whose keys happen to be stored in another order must not read as
@@ -509,24 +510,4 @@ export function format(text) {
 }
 
 /** A starter spec, for the first time someone opens the text view on nothing. */
-export const EXAMPLE = `# TesserCAD spec v${SPEC_VERSION}
-part "Mounting plate"
-units mm
-
-# Change a parameter and every feature that references it follows.
-param plate_w = 120
-param plate_d = 80
-param thick = 8
-param bolt = 6.6      # M6 clearance
-
-feature box "Plate"
-  w = plate_w
-  d = plate_d
-  h = thick
-  material = aluminium
-
-feature cylinder "Bolt hole"
-  r = bolt / 2
-  h = thick * 2
-  pos = plate_w / 2 - 12, plate_d / 2 - 12, 0
-`;
+export const EXAMPLE = tfmt('# TesserCAD spec v{SPEC_VERSION}\npart "Mounting plate"\nunits mm\n\n# Change a parameter and every feature that references it follows.\nparam plate_w = 120\nparam plate_d = 80\nparam thick = 8\nparam bolt = 6.6      # M6 clearance\n\nfeature box "Plate"\n  w = plate_w\n  d = plate_d\n  h = thick\n  material = aluminium\n\nfeature cylinder "Bolt hole"\n  r = bolt / 2\n  h = thick * 2\n  pos = plate_w / 2 - 12, plate_d / 2 - 12, 0\n', { SPEC_VERSION });

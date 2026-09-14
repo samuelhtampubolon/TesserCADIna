@@ -15,12 +15,26 @@
  * off and reload, which is the only proof that counts.
  */
 
+/**
+ * Every key this application writes, with what is in it.
+ *
+ * This list is the ownership report and it is also what "Lupakan semua yang
+ * tersimpan" deletes, so a key missing from here is not a documentation slip:
+ * it is data the panel swears is not there and the delete button leaves
+ * behind. It is checked against the source by tools/tests/i18n.mjs.
+ *
+ * The prefix is `tessercadina.`, not `tessercad.`. GitHub Pages serves this
+ * and TesserCAD from one host, and local storage is per origin rather than
+ * per path, so a shared prefix would put two applications in one drawer.
+ */
 const KEYS = [
-  ['tessercad.autosave.v3', 'the document you have open'],
-  ['tessercad.vcs.v1', 'saved versions and branches'],
-  ['tessercad.studio.v1', 'studio standards, decisions and macros'],
-  ['tessercad.prefs.v1', 'your preferences'],
-  ['tessercad.why.v1', 'which engineering notes you have seen'],
+  ['tessercadina.autosave.v3', 'dokumen yang sedang Anda buka'],
+  ['tessercadina.vcs.v1', 'versi dan cabang tersimpan'],
+  ['tessercadina.studio.v1', 'standar studio, keputusan, dan makro'],
+  ['tessercadina.prefs.v1', 'preferensi Anda'],
+  ['tessercadina.why.seen.v1', 'catatan teknik yang sudah Anda lihat'],
+  ['tessercadina.recentCommands', 'perintah yang terakhir Anda pakai'],
+  ['tessercadina.seenWelcome', 'apakah layar sambutan sudah tampil'],
 ];
 
 /** Register the worker. Silent on failure: offline is a bonus, not a gate. */
@@ -60,7 +74,7 @@ export async function status() {
 
   if (typeof caches !== 'undefined') {
     try {
-      const keys = (await caches.keys()).filter(k => k.startsWith('tessercad-'));
+      const keys = (await caches.keys()).filter(k => k.startsWith('tessercadina-'));
       out.version = keys[0] || null;
       if (keys[0]) {
         const c = await caches.open(keys[0]);
@@ -109,7 +123,7 @@ export async function uninstall() {
   const out = { caches: 0, worker: false };
   if (typeof caches !== 'undefined') {
     for (const k of await caches.keys()) {
-      if (k.startsWith('tessercad-')) { await caches.delete(k); out.caches++; }
+      if (k.startsWith('tessercadina-')) { await caches.delete(k); out.caches++; }
     }
   }
   const reg = await navigator.serviceWorker?.getRegistration?.('./');

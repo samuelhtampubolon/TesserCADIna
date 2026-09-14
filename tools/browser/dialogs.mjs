@@ -50,9 +50,9 @@ ok('and all of them have a label, icon and group', reg.noIcon.length === 0, reg.
 await page.evaluate(() => tesserCAD.showDrawing());
 await page.waitForTimeout(400);
 let t = await modalText();
-ok('the shop drawing dialog opens', /Shop drawing|Paper/.test(await page.evaluate(() => document.querySelector('.modal')?.innerText || '')), t.slice(0, 60));
+ok('the shop drawing dialog opens', /Gambar kerja|Kertas/.test(await page.evaluate(() => document.querySelector('.modal')?.innerText || '')), t.slice(0, 60));
 ok('it offers the three paper sizes', /A4[\s\S]*A3[\s\S]*A2/.test(t));
-ok('and both projection conventions', /FIRST ANGLE/.test(t) && /THIRD ANGLE/.test(t));
+ok('and both projection conventions', /SUDUT PERTAMA/.test(t) && /SUDUT KETIGA/.test(t));
 
 const sheet = await page.evaluate(() => {
   const svg = document.querySelector('.sheet-view svg');
@@ -62,8 +62,8 @@ const sheet = await page.evaluate(() => {
     viewBox: svg.getAttribute('viewBox'),
     lines: svg.querySelectorAll('line, path, polyline').length,
     circles: svg.querySelectorAll('circle').length,
-    labels: labels.filter(x => /FRONT|TOP|RIGHT|ISO/.test(x)),
-    hasTitle: labels.some(x => /FIRST ANGLE/.test(x)),
+    labels: labels.filter(x => /DEPAN|ATAS|KANAN|ISO/.test(x)),
+    hasTitle: labels.some(x => /SUDUT PERTAMA/.test(x)),
     dashed: !!svg.innerHTML.match(/stroke-dasharray/),
     w: Math.round(r.width), h: Math.round(r.height),
   };
@@ -77,27 +77,27 @@ ok('and it scales to the dialog width rather than overflowing', sheet.w > 400 &&
 
 // Switching to third angle must move the views, not just relabel them.
 const firstY = await page.evaluate(() => {
-  const t = [...document.querySelectorAll('.sheet-view svg text')].find(n => n.textContent === 'TOP');
-  const f = [...document.querySelectorAll('.sheet-view svg text')].find(n => n.textContent === 'FRONT');
+  const t = [...document.querySelectorAll('.sheet-view svg text')].find(n => n.textContent === 'ATAS');
+  const f = [...document.querySelectorAll('.sheet-view svg text')].find(n => n.textContent === 'DEPAN');
   return { top: +t.getAttribute('y'), front: +f.getAttribute('y') };
 });
-await click('THIRD ANGLE');
+await click('SUDUT KETIGA');
 await page.waitForTimeout(500);
 const thirdY = await page.evaluate(() => {
-  const t = [...document.querySelectorAll('.sheet-view svg text')].find(n => n.textContent === 'TOP');
-  const f = [...document.querySelectorAll('.sheet-view svg text')].find(n => n.textContent === 'FRONT');
+  const t = [...document.querySelectorAll('.sheet-view svg text')].find(n => n.textContent === 'ATAS');
+  const f = [...document.querySelectorAll('.sheet-view svg text')].find(n => n.textContent === 'DEPAN');
   return { top: +t.getAttribute('y'), front: +f.getAttribute('y') };
 });
 ok('first angle draws the top view below the front view on the page',
   firstY.top > firstY.front, `top y=${firstY.top}, front y=${firstY.front}`);
 ok('and switching to third angle swaps them, so the layout matches the symbol',
   thirdY.top < thirdY.front, `top y=${thirdY.top}, front y=${thirdY.front}`);
-await click('FIRST ANGLE');
+await click('SUDUT PERTAMA');
 await page.waitForTimeout(400);
 
 // Hidden lines off should change the drawing.
 const withHLR = await page.evaluate(() => document.querySelectorAll('.sheet-view svg [stroke-dasharray]').length);
-await page.evaluate(() => { const c = [...document.querySelectorAll('.modal-body input[type=checkbox]')].find(x => /hidden/i.test(x.closest('label')?.innerText || '')); if (c) c.click(); });
+await page.evaluate(() => { const c = [...document.querySelectorAll('.modal-body input[type=checkbox]')].find(x => /tersembunyi/i.test(x.closest('label')?.innerText || '')); if (c) c.click(); });
 await page.waitForTimeout(700);
 const noHLR = await page.evaluate(() => document.querySelectorAll('.sheet-view svg [stroke-dasharray]').length);
 ok('turning hidden-line removal off removes the dashed edges', noHLR !== withHLR, `${withHLR} dashed → ${noHLR}`);
@@ -110,13 +110,13 @@ t = await modalText();
 const chain = await page.evaluate(() => [...document.querySelectorAll('.stk-row')]
   .map(r => [...r.querySelectorAll('input')].map(i => i.value).join(' | ')).filter(Boolean));
 ok('the stack-up dialog opens with a chain taken from the model',
-  /THE CHAIN/i.test(t) && chain.length >= 1 && /Bolted plate/.test(chain[0]), chain.join(' / '));
-ok('it shows all three answers at once', /WORST CASE/.test(t) && /ROOT SUM SQUARE/.test(t) && /MONTE CARLO/.test(t));
+  /Rantainya/i.test(t) && chain.length >= 1 && /Pelat baut/.test(chain[0]), chain.join(' / '));
+ok('it shows all three answers at once', /Kasus terburuk/i.test(t) && /Root sum square/i.test(t) && /Monte Carlo/i.test(t));
 ok('and reports Cp and Cpk', /Cp \d/.test(t) && /Cpk \d/.test(t), (t.match(/Cp [\d.]+, Cpk [\d.]+/) || [''])[0]);
 
 // Add a link, then loosen it until the chain fails, and check the advice appears.
 const before = chain.length;
-await click('+ Add a link');
+await click('+ Tambah tautan');
 await page.waitForTimeout(250);
 let links = await page.evaluate(() => [...document.querySelectorAll('.stk-row')]
   .filter(r => r.querySelector('input[type=number]')).length);
@@ -127,9 +127,9 @@ ok('a link can be added', links === before + 1, `${before} → ${links}`);
 // than offer a tightening that would not work.
 const wontClose = await modalText();
 ok('a chain whose nominals miss the requirement says so instead of offering a tightening',
-  /nominal chain closes at/.test(wontClose) && !/Scale every open tolerance/.test(wontClose),
-  (wontClose.match(/The nominal chain closes at [^.]+\./) || [''])[0]);
-ok('and names the dimension change that would close it', /change a dimension by/.test(wontClose));
+  /Rantai nominal menutup di/.test(wontClose) && !/Skalakan setiap toleransi terbuka/.test(wontClose),
+  (wontClose.match(/Rantai nominal menutup di [^.]+\./) || [''])[0]);
+ok('and names the dimension change that would close it', /ubah sebuah dimensi sebesar/.test(wontClose));
 
 // Zero that link out so the nominals close again, then loosen a tolerance.
 const broke = await page.evaluate(async () => {
@@ -143,9 +143,9 @@ const broke = await page.evaluate(async () => {
   await new Promise(r => setTimeout(r, 500));
   return document.querySelector('.modal-body').innerText.replace(/\s+/g, ' ');
 });
-ok('loosening a tolerance drops the verdict', /does not hold|Incapable|Poor|Marginal|outside the requirement/.test(broke),
+ok('loosening a tolerance drops the verdict', /tidak memenuhi|Tidak mampu|Buruk|Marginal|di luar kebutuhan/.test(broke),
   (broke.match(/Cp [\d.]+, Cpk [\d.]+\. [^.]+\./) || [''])[0]);
-ok('and the app proposes how to fix it', /Scale every open tolerance/.test(broke));
+ok('and the app proposes how to fix it', /Skalakan setiap toleransi terbuka/.test(broke));
 const share = await page.evaluate(() => [...document.querySelectorAll('.stk-share')].map(n => n.textContent));
 ok('variance share is shown per link', share.length >= 2 && share.some(x => x !== '0%'), share.join(' '));
 
@@ -157,7 +157,7 @@ const loosen = async () => page.evaluate(async () => {
   tol.value = '0.9'; tol.dispatchEvent(new Event('input', { bubbles: true }));
   await new Promise(r => setTimeout(r, 450));
 });
-for (const lever of ['Scale every open tolerance', '→ ±', 'Allocate from the requirement']) {
+for (const lever of ['Skalakan setiap toleransi terbuka', '→ ±', 'Alokasikan mundur dari kebutuhan']) {
   const got = await page.evaluate(async (label) => {
     const b = [...document.querySelectorAll('.modal-body button')].find(x => x.textContent.includes(label));
     if (!b) return { found: false };
@@ -180,10 +180,10 @@ const fits = await page.evaluate(() => {
   return { count: rows.length, g6: rows.find(r => r[0] === 'H7/g6'), s6: rows.find(r => r[0] === 'H7/s6') };
 });
 ok('every named fit is listed', fits.count === 9, `${fits.count} fits`);
-ok('H7/g6 at 25mm reads 0.007 to 0.041 clearance', /0\.007 to 0\.041/.test(fits.g6[4]), fits.g6[4]);
+ok('H7/g6 at 25mm reads 0.007 to 0.041 clearance', /0\.007 sampai 0\.041/.test(fits.g6[4]), fits.g6[4]);
 ok('and the hole and shaft limits come from the published table',
   /\+0\.021 \/ \+0\.000/.test(fits.g6[2]) && /-0\.007 \/ -0\.020/.test(fits.g6[3]), `${fits.g6[2]} | ${fits.g6[3]}`);
-ok('a driving fit is shown as interference, not negative clearance', /tight/.test(fits.s6[4]), fits.s6[4]);
+ok('a driving fit is shown as interference, not negative clearance', /lebih ketat/.test(fits.s6[4]), fits.s6[4]);
 const resized = await page.evaluate(async () => {
   const i = document.querySelector('.modal-body input[type=number]');
   i.value = '60'; i.dispatchEvent(new Event('input', { bubbles: true }));
@@ -203,7 +203,7 @@ const spec = await page.evaluate(() => {
 ok('the spec is generated from the live document',
   /^# TesserCAD spec v1/.test(spec.text) && /^feature \w+ "/m.test(spec.text) && /^param \w+ = /m.test(spec.text),
   `${spec.lines} lines, ${(spec.text.match(/^feature /gm) || []).length} features`);
-ok('it names the document', /part "Bolted plate"/.test(spec.text), (spec.text.match(/part .*/) || [''])[0]);
+ok('it names the document', /part "Pelat baut"/.test(spec.text), (spec.text.match(/part .*/) || [''])[0]);
 
 // A bad edit must be refused with a line number and change nothing.
 const rejected = await page.evaluate(async () => {
@@ -213,13 +213,13 @@ const rejected = await page.evaluate(async () => {
   a.dispatchEvent(new Event('input', { bubbles: true }));
   await new Promise(r => setTimeout(r, 400));
   const shown = document.querySelector('.modal-body').innerText;
-  [...document.querySelectorAll('.modal-foot button')].find(x => x.textContent.trim() === 'Apply').click();
+  [...document.querySelectorAll('.modal-foot button')].find(x => x.textContent.trim() === 'Terapkan').click();
   await new Promise(r => setTimeout(r, 300));
   return { shown, before, after: (await import('/src/core/doc.js')).store.doc.features.length,
     stillOpen: !!document.querySelector('.spec-edit') };
 });
-ok('a syntax error is reported with its line number', /line \d+/i.test(rejected.shown),
-  (rejected.shown.match(/line \d+[^\n]*/i) || [''])[0]);
+ok('a syntax error is reported with its line number', /baris \d+/i.test(rejected.shown),
+  (rejected.shown.match(/baris \d+[^\n]*/i) || [''])[0]);
 ok('Apply is refused and the model is untouched', rejected.before === rejected.after, `${rejected.before} → ${rejected.after}`);
 ok('and the dialog stays open so the typo can be fixed', rejected.stillOpen);
 
@@ -232,7 +232,7 @@ const applied = await page.evaluate(async () => {
   a.dispatchEvent(new Event('input', { bubbles: true }));
   await new Promise(r => setTimeout(r, 400));
   const preview = document.querySelector('.modal-body').innerText.replace(/\s+/g, ' ');
-  [...document.querySelectorAll('.modal-foot button')].find(x => x.textContent.trim() === 'Apply').click();
+  [...document.querySelectorAll('.modal-foot button')].find(x => x.textContent.trim() === 'Terapkan').click();
   await new Promise(r => setTimeout(r, 600));
   return { preview, value: store.doc.params.find(p => p.name === 'plate_w')?.value, closed: !document.querySelector('.spec-edit') };
 });
@@ -265,11 +265,11 @@ const setup = await page.evaluate(async () => {
 await page.evaluate(() => tesserCAD.showMerge());
 await page.waitForTimeout(400);
 t = await modalText();
-ok('the merge dialog finds the common ancestor', /Common ancestor/.test(t), (t.match(/Common ancestor[^.]*\./) || [''])[0]);
-ok('and reports a clean merge with the incoming feature', /Merged cleanly/.test(t) && /1 feature brought in/.test(t), t.slice(0, 110));
+ok('the merge dialog finds the common ancestor', /Leluhur bersama/.test(t), (t.match(/Leluhur bersama[^.]*\./) || [''])[0]);
+ok('and reports a clean merge with the incoming feature', /Tergabung bersih/.test(t) && /1 fitur dimasukkan/.test(t), t.slice(0, 110));
 ok('the diff names what would arrive', /ADDED Sphere/i.test(t), (t.match(/ADDED \w+/) || [''])[0]);
 const merged = await page.evaluate(async () => {
-  [...document.querySelectorAll('.modal-foot button')].find(x => x.textContent.trim() === 'Merge').click();
+  [...document.querySelectorAll('.modal-foot button')].find(x => x.textContent.trim() === 'Gabungkan').click();
   await new Promise(r => setTimeout(r, 700));
   const { store } = await import('/src/core/doc.js');
   return { names: store.doc.features.map(f => f.name), canUndo: store.canUndo() };
@@ -317,7 +317,7 @@ const picked = await page.evaluate(async () => {
   b.click();
   await new Promise(r => setTimeout(r, 400));
   const stillOpen = document.querySelector('.modal-body').innerText.replace(/\s+/g, ' ');
-  [...document.querySelectorAll('.modal-foot button')].find(x => x.textContent.trim() === 'Merge').click();
+  [...document.querySelectorAll('.modal-foot button')].find(x => x.textContent.trim() === 'Gabungkan').click();
   await new Promise(r => setTimeout(r, 600));
   const { store } = await import('/src/core/doc.js');
   return { text: stillOpen, value: store.doc.params.find(p => p.name === 'plate_w').value };

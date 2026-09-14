@@ -764,7 +764,7 @@ export const store = new Store();
 
 /* ----------------------------------------------------------- autosave */
 
-const AUTOSAVE_KEY = 'tessercad.autosave.v3';
+const AUTOSAVE_KEY = 'tessercadina.autosave.v3';
 
 export function saveLocal() {
   try {

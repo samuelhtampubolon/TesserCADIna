@@ -2,13 +2,15 @@
 
 **Studio CAD parametrik berbahasa Indonesia yang berjalan sepenuhnya di peramban.**
 Pemodelan solid 3D, drafting 2D, dan simulasi 4D (tiga dimensi plus waktu).
-Satuan metrik, gambar kerja sudut pertama ISO/SNI, lebih ringan dari TesserCAD.
+Satuan metrik, gambar kerja sudut pertama ISO/SNI. Unduhan desktopnya lebih
+ringan dari TesserCAD; salinan webnya membawa kamusnya sendiri, jadi sedikit
+lebih besar. Angkanya ada di bawah.
 
 ![MIT licence](https://img.shields.io/badge/licence-MIT-3da639)
 ![No build step](https://img.shields.io/badge/build-none-4c9fff)
 ![Bahasa Indonesia](https://img.shields.io/badge/UI-Bahasa%20Indonesia-4c9fff)
 ![202 commands](https://img.shields.io/badge/commands-202-8957e5)
-![1309 tests](https://img.shields.io/badge/tests-1309%20passing-3da639)
+![1346 tests](https://img.shields.io/badge/tests-1346%20passing-3da639)
 ![Touch ready](https://img.shields.io/badge/touch-ready-4c9fff)
 
 > **▶ Pakai sekarang, tanpa instalasi:**
@@ -19,17 +21,38 @@ Satuan metrik, gambar kerja sudut pertama ISO/SNI, lebih ringan dari TesserCAD.
 > — ambil **`.zip` Windows**, ekstrak, jalankan `TesserCADIna.exe`. Tidak ada installer,
 > tidak perlu hak administrator. Ada build Linux juga. **There is no macOS build**:
 > `.dmg` yang tidak ditandatangani ditolak Gatekeeper, jadi yang ditawarkan hanya
-> versi web dan zip Windows/Linux. Target ukuran exe/zip Windows: **sekitar 80 MB,
-> di bawah 90 MB** (Chromium locale hanya `en-US` dan `id`).
+> versi web dan zip Windows/Linux. Ukuran unduhan Windows, **terukur di CI**:
+> zip **135 MB**, installer NSIS **98 MB**. Itu berat Electron 44, bukan berat
+> aplikasinya — sumber aplikasi ini sendiri sekitar 2 MB.
 >
 > Salinan web juga bekerja offline setelah dibuka: **Bantuan → Offline dan
 > kepemilikan** memasangnya, lalu jaringan boleh dimatikan.
 
-TesserCADIna adalah edisi Bahasa Indonesia yang lebih ringan dari
+TesserCADIna adalah edisi Bahasa Indonesia dari
 [TesserCAD](https://github.com/samuelhtampubolon/TesserCAD): mesin geometri, Boolean,
-command registry, Design Doctor, gambar kerja, toleransi, dan simulasi 4D yang sama
-(sekitar 85–95%), dengan antarmuka sepenuhnya Bahasa Indonesia kecuali istilah CAD
-yang sudah akrab (Extrude, Boolean, STL, Gizmo, Undo, Draft, Snap, Ortho, ISO, DXF).
+command registry, Design Doctor, gambar kerja, toleransi, dan simulasi 4D yang sama,
+dengan antarmuka sepenuhnya Bahasa Indonesia kecuali istilah CAD yang sudah akrab
+(Extrude, Boolean, STL, Gizmo, Undo, Draft, Snap, Ortho, ISO, DXF).
+
+### Seberapa dekat dengan TesserCAD, diukur bukan diklaim
+
+```bash
+node tools/parity.mjs ../TesserCAD      # butuh salinan TesserCAD di sebelahnya
+```
+
+| | |
+|---|---|
+| Perintah | **202 di sini, 202 di TesserCAD** — tidak ada satu pun yang hilang |
+| API modul | tidak ada ekspor TesserCAD yang absen di sini |
+| Sumber yang sama persis | **89,6%** (22.713 dari 25.355 baris) |
+| Yang baru atau berubah | 10,4% — hampir seluruhnya kamus dan i18n |
+| Unduhan web (gzip) | 0,60 MB di sini, 0,53 MB di TesserCAD (**+11,8%**) |
+| Unduhan desktop | lebih kecil: hanya locale `en-US` dan `id`, TesserCAD membawa semuanya |
+
+Jadi "lebih ringan" berlaku untuk `.exe`-nya, bukan untuk halaman webnya. Kamus
+1.938 baris itu harus ikut terkirim, dan itulah harga antarmuka yang benar-benar
+berbahasa Indonesia. Angka di tabel ini dihasilkan `tools/parity.mjs`, jadi siapa
+pun bisa memeriksanya sendiri.
 
 ## Yang ada di dalamnya
 
@@ -63,7 +86,7 @@ python3 -m http.server 8080
 
 Lalu buka `http://localhost:8080`. `npm test` menjalankan suite headless.
 
-## Build desktop (Windows zip ~80 MB)
+## Build desktop
 
 Dijalankan di GitHub Actions saat Anda menandai rilis `v*`, atau secara lokal:
 
@@ -74,7 +97,22 @@ npm run dist
 ```
 
 Artefak: `TesserCADIna-1.0.0-windows-x64.zip` dan installer NSIS per-pengguna.
-Locale Chromium selain Inggris dan Indonesia dibuang agar ukuran tetap di bawah 90 MB.
+Locale Chromium selain Inggris dan Indonesia dibuang, yang menghemat belasan MB.
+
+Ukuran itu diperiksa setiap build: langkah **The Windows download is the size the
+README promises** di `.github/workflows/desktop.yml` mencetak ukuran sebenarnya
+dan menggagalkan build kalau melewati batas. Batasnya adalah penjaga regresi di
+atas angka terukur sekarang, bukan target: kalau locale stripping lepas atau ada
+yang ikut terbungkus, build merah alih-alih halaman ini diam-diam jadi salah.
+
+> **Catatan jujur soal ukuran.** Halaman ini dulu menjanjikan zip "sekitar 80 MB,
+> di bawah 90 MB". Sampai langkah pengukuran di atas ada, tidak ada yang pernah
+> memeriksanya, dan ternyata tidak benar: Electron 44 saja sudah sebesar itu.
+> Menurunkannya sampai 90 MB bukan soal menyetel konfigurasi — perlu memilih
+> salah satu dari: format unduhan `.7z` (LZMA, sekitar 75 MB, tapi pengguna
+> butuh 7-Zip), `compression: maximum` untuk installer (mungkin cukup untuk
+> installer saja, tetapi LZMA solid kerap dicurigai antivirus), atau Electron
+> versi lama. Ketiganya punya harga, jadi belum dipilih.
 
 ## Yang perlu Anda lakukan sendiri
 

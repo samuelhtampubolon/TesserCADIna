@@ -642,13 +642,13 @@ function titleBlock(doc, build, bodies, scale, sheet, proj = PROJECTIONS.first) 
     mass: build?.stats?.mass ?? 0,
     units: doc.meta.units,
     scale: scaleLabel(scale),
-    sheet: SHEETS[sheet]?.label || sheet,
+    sheet: tr(SHEETS[sheet]?.label || sheet),
     date: new Date().toISOString().slice(0, 10),
     process: proc.label,
     tolerance: lim.tolerance,
     generator: `${APP_NAME} ${APP_VERSION}`,
     // First angle. Stated explicitly because the alternative mirrors the part.
-    projection: proj.label,
+    projection: tr(proj.label),
   };
 }
 
@@ -704,7 +704,7 @@ export function sheetToSVG(s, { dark = false } = {}) {
 
     for (const d of v.dims) L.push(dimSVG(d, X, Y, s.scale, ink));
 
-    L.push(`<text x="${f(ox)}" y="${f(flip(oy - (v.box ? (v.box.minY * s.scale) : 0) + 16))}" fill="${ink}" font-size="3.2" font-family="system-ui,sans-serif" text-anchor="middle" letter-spacing="0.4">${v.label}${v.iso ? '' : ''}</text>`);
+    L.push(`<text x="${f(ox)}" y="${f(flip(oy - (v.box ? (v.box.minY * s.scale) : 0) + 16))}" fill="${ink}" font-size="3.2" font-family="system-ui,sans-serif" text-anchor="middle" letter-spacing="0.4">${tr(v.label)}</text>`);
   }
 
   L.push(titleSVG(s, ink, thin));
@@ -827,7 +827,7 @@ export function sheetToDraw(s) {
     entities.push({
       id: id(), type: 'text', layer: 'lt',
       p: [ox, oy + (v.box ? v.box.minY * s.scale : 0) - 14],
-      text: v.label, size: 4, rot: 0,
+      text: tr(v.label), size: 4, rot: 0,
     });
   }
 

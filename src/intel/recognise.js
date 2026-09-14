@@ -41,6 +41,7 @@
  * someone about to cut metal.
  */
 import * as THREE from 'three';
+import { tfmt } from '../core/i18n.js';
 
 const DEG = Math.PI / 180;
 
@@ -62,7 +63,7 @@ export function recognise(geometry, matrix = null, {
   if (tris.length > maxTriangles) {
     return {
       faces: [], holes: [], bosses: [], patches: 0, triangles: tris.length, truncated: true,
-      reason: `${Math.round(tris.length / 1000)}k triangles is past the ${maxTriangles / 1000}k analysis limit.`,
+      reason: tfmt('{n}k triangles is past the {limit}k analysis limit.', { n: Math.round(tris.length / 1000), limit: maxTriangles / 1000 }),
     };
   }
 

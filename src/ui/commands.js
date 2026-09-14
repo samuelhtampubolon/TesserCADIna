@@ -17,7 +17,9 @@ import { t } from '../core/i18n.js';
 export function buildCommands(app) {
   const C = [];
   const add = (id, label, icon, group, run, opts = {}) => {
-    const kw = opts.keywords ? `${opts.keywords} ${t(label)}` : t(label);
+    // The keywords are translated too, or the palette answers only English:
+    // they are the words a user types to find a command by what it does.
+    const kw = opts.keywords ? `${t(opts.keywords)} ${t(label)}` : t(label);
     C.push({ id, label: t(label), icon, group, run, ...opts, keywords: kw });
     return C[C.length - 1];
   };

@@ -244,7 +244,7 @@ for (const payload of PAYLOADS) {
 const hostileSpec = `part "x"\nparam __proto__ = 1\nfeature box "<img src=x onerror=alert(1)>"\n  w = 10\n  d = 10\n  h = 10\n`;
 const parsedSpec = Spec.fromSpec(hostileSpec);
 ok('a spec cannot declare a parameter named __proto__',
-  !parsedSpec.doc && parsedSpec.errors.some(e => /reserved/.test(e.message)),
+  !parsedSpec.doc && parsedSpec.errors.some(e => /kata cadangan/.test(e.message)),
   JSON.stringify(parsedSpec.errors.map(e => e.message)).slice(0, 90));
 ok('and parsing a hostile spec pollutes nothing', unpolluted());
 

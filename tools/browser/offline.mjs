@@ -61,7 +61,7 @@ const st = await page.evaluate(async () => (await import('/src/intel/offline.js'
 ok('a service worker registers and takes control', st.controlled === true, JSON.stringify({ registered: st.registered, controlled: st.controlled }));
 ok('it caches the whole application, not a page of it', st.files >= 50, `${st.files} files`);
 ok('and reports how much is on the machine', st.cachedBytes > 500000, `${(st.cachedBytes / 1e6).toFixed(1)} MB`);
-ok('the cache is versioned by content', /^tessercad-[0-9a-f]{12}$/.test(st.version || ''), st.version);
+ok('the cache is versioned by content', /^tessercadina-[0-9a-f]{12}$/.test(st.version || ''), st.version);
 
 /* ---- THE claim: it opens with the network off ---- */
 await page.waitForTimeout(1200);
@@ -89,14 +89,14 @@ await ctx.setOffline(false);
 await page.evaluate(() => window.tesserCAD.showOwnership());
 await page.waitForTimeout(700);
 let t = await modalText();
-ok('the ownership panel says it is installed', /Installed\./.test(t), t.slice(0, 80));
+ok('the ownership panel says it is installed', /Terpasang\./.test(t), t.slice(0, 80));
 ok('it lists what the app sends, which is nothing',
-  /No account/.test(t) && /No telemetry/.test(t) && /No licence check/.test(t));
-ok('it tells the user how to check that themselves', /network panel/.test(t));
+  /Tanpa akun/.test(t) && /Tanpa telemetri/.test(t) && /Tanpa pemeriksaan lisensi/.test(t));
+ok('it tells the user how to check that themselves', /panel jaringan/.test(t));
 ok('and names every thing it keeps locally',
-  /the document you have open/.test(t) && /saved versions and branches/.test(t) && /your preferences/.test(t));
+  /dokumen yang sedang Anda buka/.test(t) && /versi dan cabang tersimpan/.test(t) && /preferensi Anda/.test(t));
 ok('it offers to delete all of it', await page.evaluate(() =>
-  [...document.querySelectorAll('.modal-foot button')].some(b => /Forget everything/.test(b.textContent))));
+  [...document.querySelectorAll('.modal-foot button')].some(b => /Lupakan semua yang tersimpan/.test(b.textContent))));
 await close();
 
 /* ---- document health ---- */
@@ -113,11 +113,11 @@ await page.waitForTimeout(700);
 await page.evaluate(() => window.tesserCAD.showHygiene());
 await page.waitForTimeout(600);
 t = await modalText();
-ok('survey coordinates are caught as serious', /SERIOUS/.test(t) && /survey coordinates/.test(t), t.slice(0, 110));
+ok('survey coordinates are caught as serious', /SERIOUS/.test(t) && /koordinat survei/.test(t), t.slice(0, 110));
 // The exact figure depends on how far out the document ended up, so what is
 // checked here is that a real float32 step is quoted at all; the Node suite
 // checks the arithmetic against Float32Array itself.
-const quoted = (t.match(/represented there is ([\d.]+) (µm|mm)/) || []);
+const quoted = (t.match(/bisa diwakili di sana adalah ([\d.]+) (µm|mm)/) || []);
 ok('the real float32 step is quoted, not a rule of thumb', !!quoted[1], quoted[0] || 'no step quoted');
 ok('and it is a power of two, as every float32 step is',
   (() => {
@@ -125,14 +125,14 @@ ok('and it is a power of two, as every float32 step is',
     const l = Math.log2(mm);
     return Math.abs(l - Math.round(l)) < 0.02;
   })(), quoted[0]);
-ok('the weight report names where the bytes are', /Where the weight is|WHERE THE WEIGHT IS/i.test(t));
+ok('the weight report names where the bytes are', /Di mana beratnya berada/i.test(t));
 const fixed = await page.evaluate(async () => {
   const { store } = await import('/src/core/doc.js');
   // Leaf features are the ones holding absolute coordinates; a boolean's own
   // transform is an offset on top of its inputs.
   const leaves = () => store.doc.features.filter(f => !f.inputs.length).map(f => f.transform.pos[0]);
   const before = leaves();
-  [...document.querySelectorAll('.modal-body button')].find(b => /Move the design to the origin/.test(b.textContent)).click();
+  [...document.querySelectorAll('.modal-body button')].find(b => /Pindahkan desain ke origin/.test(b.textContent)).click();
   await new Promise(r => setTimeout(r, 900));
   return { before, after: leaves(), notes: store.doc.meta.notes || '',
     body: (() => { const b = window.tesserCAD.build.stats.box; return { x: (b.min.x + b.max.x) / 2 }; })() };
@@ -144,7 +144,7 @@ ok('and the rendered geometry comes back with it',
   Number.isFinite(fixed.body.x) && Math.abs(fixed.body.x) < 10000,
   `body centre x = ${Number.isFinite(fixed.body.x) ? fixed.body.x.toFixed(1) : fixed.body.x}`);
 ok('and records the offset it applied, so the site coordinate is not lost',
-  /Design origin offset from the original coordinates/.test(fixed.notes), fixed.notes.slice(0, 110));
+  /Origin desain bergeser dari koordinat aslinya/.test(fixed.notes), fixed.notes.slice(0, 110));
 await close();
 await page.evaluate(async () => { const { store } = await import('/src/core/doc.js'); store.undo(); store.undo(); });
 await page.waitForTimeout(600);
@@ -155,19 +155,19 @@ await page.waitForTimeout(400);
 const spoke = await page.evaluate(async () => {
   const { store } = await import('/src/core/doc.js');
   const i = document.querySelector('.sp-input');
-  i.value = '4 M6 clearance holes 40 apart';
+  i.value = '4 lubang clearance M6 berjarak 40';
   i.dispatchEvent(new Event('input', { bubbles: true }));
   await new Promise(r => setTimeout(r, 400));
   const readback = document.querySelector('.sp-out').innerText.replace(/\s+/g, ' ');
   const before = store.doc.features.length;
-  [...document.querySelectorAll('.modal-foot button')].find(x => /Build it/.test(x.textContent)).click();
+  [...document.querySelectorAll('.modal-foot button')].find(x => /Bangun/.test(x.textContent)).click();
   await new Promise(r => setTimeout(r, 900));
   const added = store.doc.features.slice(before);
   return { readback, added: added.map(f => ({ type: f.type, name: f.name, r: f.params.r, count: f.params.count })), depth: store.depth,
     params: store.doc.params.filter(p => p.name === 'clear_m6') };
 });
 ok('the readback states what it understood before building',
-  /M6 clearance diameter 6.6 mm/.test(spoke.readback), spoke.readback.slice(0, 100));
+  /M6 diameter clearance 6.6 mm/.test(spoke.readback), spoke.readback.slice(0, 100));
 ok('building makes a hole and a pattern, both editable',
   spoke.added.length === 2 && spoke.added[1].type === 'patternLinear' && spoke.added[1].count === 4,
   JSON.stringify(spoke.added));
@@ -188,7 +188,7 @@ ok('and the standards it comes from', /ISO 724/.test(t) && /ISO 273/.test(t) && 
 const bolt = await page.evaluate(async () => {
   const { store } = await import('/src/core/doc.js');
   const before = store.doc.features.length;
-  [...document.querySelectorAll('.modal-foot button')].find(x => /Add to the model/.test(x.textContent)).click();
+  [...document.querySelectorAll('.modal-foot button')].find(x => /Tambahkan ke model/.test(x.textContent)).click();
   await new Promise(r => setTimeout(r, 900));
   return { added: store.doc.features.length - before, names: store.doc.features.slice(before).map(f => f.name) };
 });

@@ -30,6 +30,7 @@
 import * as THREE from 'three';
 import { MATERIALS } from '../core/doc.js';
 import { STRENGTH } from './brief.js';
+import { tfmt } from '../core/i18n.js';
 
 const EPS = 1e-7;
 
@@ -308,8 +309,8 @@ export function checkSection(section, { case: kind = 'cantilever', force = 0, sp
     material,
     // The one number that turns a stress into a decision.
     verdict: total <= allow
-      ? `${((total / allow) * 100).toFixed(0)}% of allowable`
-      : `over by ${((total / allow - 1) * 100).toFixed(0)}%`,
+      ? tfmt('{p1}% of allowable', { p1: ((total / allow) * 100).toFixed(0) })
+      : tfmt('over by {p1}%', { p1: ((total / allow - 1) * 100).toFixed(0) }),
   };
 }
 

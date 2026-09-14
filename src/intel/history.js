@@ -30,7 +30,7 @@
  */
 import { store } from '../core/doc.js';
 
-const KEY = 'tessercad.vcs.v1';
+const KEY = 'tessercadina.vcs.v1';
 const MAX_SNAPSHOTS = 40;
 /** localStorage is typically 5MB; stop well short so the app can still save. */
 const SOFT_LIMIT = 3.2e6;

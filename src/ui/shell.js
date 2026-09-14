@@ -7,7 +7,7 @@
  */
 import { bus, T } from '../core/bus.js';
 import { icon } from './icons.js';
-import { t } from '../core/i18n.js';
+import { t, tfmt } from '../core/i18n.js';
 
 /* ----------------------------------------------------------- DOM helper */
 
@@ -17,7 +17,11 @@ export function el(tag, attrs = {}, children = []) {
     if (v == null || v === false) continue;
     if (k === 'class') node.className = v;
     else if (k === 'text') node.textContent = t(v);
-    else if (k === 'html') node.innerHTML = v;
+    // Markup goes through the dictionary exactly as text does. A paragraph
+    // written with a <kbd> in it is still a sentence a user reads, and
+    // leaving `html` out is how the right panel's help stayed English while
+    // everything around it was translated.
+    else if (k === 'html') node.innerHTML = t(v);
     else if (k === 'style' && typeof v === 'object') Object.assign(node.style, v);
     else if (k.startsWith('on') && typeof v === 'function') node.addEventListener(k.slice(2).toLowerCase(), v);
     else if (k === 'dataset') Object.assign(node.dataset, v);
@@ -27,7 +31,10 @@ export function el(tag, attrs = {}, children = []) {
   }
   for (const c of [].concat(children)) {
     if (c == null || c === false) continue;
-    node.appendChild(typeof c === 'string' || typeof c === 'number' ? document.createTextNode(String(c)) : c);
+    // A bare string child is text a user reads, exactly as `text:` is, and the
+    // command palette's own key hints were sitting in the interface in
+    // English because only the attribute went through the dictionary.
+    node.appendChild(typeof c === 'string' || typeof c === 'number' ? document.createTextNode(t(String(c))) : c);
   }
   return node;
 }
@@ -308,7 +315,7 @@ export function commandPalette(commands, onRun, { context = '' } = {}) {
   root.appendChild(box);
 
   let filtered = recent.length ? recent : commands;
-  let heading = recent.length ? 'Recent' : 'All commands';
+  let heading = recent.length ? t('Recent') : t('All commands');
   let cursor = 0;
 
   const render = () => {
@@ -366,14 +373,14 @@ export function commandPalette(commands, onRun, { context = '' } = {}) {
 
   input.addEventListener('input', () => {
     const q = input.value.trim().toLowerCase();
-    if (!q) { filtered = recent.length ? recent : commands; heading = recent.length ? 'Recent' : 'All commands'; }
+    if (!q) { filtered = recent.length ? recent : commands; heading = recent.length ? t('Recent') : t('All commands'); }
     else {
       filtered = commands
         .map(c => ({ c, s: score(c, q) }))
         .filter(x => x.s >= 0)
         .sort((a, b) => b.s - a.s)
         .map(x => x.c);
-      heading = `${filtered.length} result${filtered.length === 1 ? '' : 's'}`;
+      heading = tfmt('{n} results', { n: filtered.length });
     }
     cursor = 0;
     render();

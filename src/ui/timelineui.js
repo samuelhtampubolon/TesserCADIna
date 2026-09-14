@@ -7,6 +7,7 @@ import { el, clear, icon } from './shell.js';
 import { store } from '../core/doc.js';
 import { bus, T } from '../core/bus.js';
 import { ANIM_PROPS, sortTrack } from '../sim/sim.js';
+import { tfmt } from '../core/i18n.js';
 
 export class TimelineUI {
   constructor(app) {
@@ -242,7 +243,7 @@ export class TimelineUI {
         this.trackCol.appendChild(el('div', { class: 'tl-track-head sub' }, [
           el('span', { class: 'tname', text: p.label }),
           el('span', {
-            class: 'mini-btn', title: `Add a ${p.label} key at the playhead`,
+            class: 'mini-btn', title: tfmt('Add a {channel} key at the playhead', { channel: p.label }),
             onclick: (e) => {
               e.stopPropagation();
               const v = keys.length ? keys[keys.length - 1].v : p.def;
@@ -256,7 +257,7 @@ export class TimelineUI {
           const node = el('div', {
             class: 'tl-key',
             style: { left: `${k.t * this.pxPerSec}px` },
-            title: `t ${k.t.toFixed(3)}s · value ${Number(k.v).toFixed(3)} · ${k.ease || 'smooth'}\nDrag to move · Alt-click to delete`,
+            title: tfmt('t {t}s · value {v} · {ease}\nDrag to move · Alt-click to delete', { t: k.t.toFixed(3), v: Number(k.v).toFixed(3), ease: k.ease || 'smooth' }),
           });
           this._bindKeyDrag(node, id, p.key, k);
           prow.appendChild(node);

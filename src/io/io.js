@@ -12,6 +12,7 @@ import { OBJLoader } from 'three/addons/OBJLoader.js';
 import { bus, T } from '../core/bus.js';
 import { store, makeFeature, uid, FILE_EXT, APP_NAME, APP_VERSION, migrate } from '../core/doc.js';
 import { toDXF, fromDXF, toSVG } from '../draft/dxf.js';
+import { tfmt } from '../core/i18n.js';
 
 /* ------------------------------------------------------------- download */
 
@@ -109,7 +110,7 @@ export function exportGLTF(viewport, { binary = true } = {}) {
     else download(safeName(store.doc.meta.name, '.gltf'), JSON.stringify(result), 'model/gltf+json');
     disposeRoot(root);
   }, (err) => {
-    bus.emit(T.TOAST, { msg: `glTF export failed: ${err.message || err}`, kind: 'err' });
+    bus.emit(T.TOAST, { msg: tfmt('glTF export failed: {error}', { error: err.message || err }), kind: 'err' });
     disposeRoot(root);
   }, { binary, onlyVisible: true });
 }
@@ -173,7 +174,7 @@ export function exportPNG(viewport, scale = 2) {
   fetch(url)
     .then(r => r.blob())
     .then(b => download(safeName(store.doc.meta.name, '.png'), b, 'image/png'))
-    .catch(err => bus.emit(T.TOAST, { msg: `PNG export failed: ${err.message || err}`, kind: 'err' }));
+    .catch(err => bus.emit(T.TOAST, { msg: tfmt('PNG export failed: {error}', { error: err.message || err }), kind: 'err' }));
 }
 
 /** A plain-text bill of materials for the current model. */
@@ -208,7 +209,7 @@ export async function importMeshFile(file) {
     const obj = new OBJLoader().parse(text);
     obj.traverse(o => { if (o.isMesh) { const g = o.geometry.clone(); g.applyMatrix4(o.matrixWorld); geometries.push(g); } });
   } else {
-    throw new Error(`Unsupported mesh format “.${ext}”`);
+    throw new Error(tfmt('Unsupported mesh format “.{ext}”', { ext }));
   }
   if (!geometries.length) throw new Error('No geometry found in that file');
 
@@ -226,7 +227,7 @@ export async function importMeshFile(file) {
       added.push(feature.id);
     });
   });
-  bus.emit(T.TOAST, { msg: `Imported ${geometries.length} bod${geometries.length === 1 ? 'y' : 'ies'} from ${file.name}`, kind: 'ok' });
+  bus.emit(T.TOAST, { msg: tfmt('Imported {n} bodies from {file}', { n: geometries.length, file: file.name }), kind: 'ok' });
   return added;
 }
 
@@ -249,7 +250,7 @@ export async function importDXFFile(file, { replace = false } = {}) {
     }
     doc.draw.activeLayer = doc.draw.layers[0].id;
   });
-  bus.emit(T.TOAST, { msg: `Imported ${parsed.entities.length} entities from ${file.name}`, kind: 'ok' });
+  bus.emit(T.TOAST, { msg: tfmt('Imported {n} entities from {file}', { n: parsed.entities.length, file: file.name }), kind: 'ok' });
   return parsed.entities.length;
 }
 
@@ -259,7 +260,7 @@ export async function importAny(file) {
   if (ext === 'tcad' || ext === 'json') return openProjectFile(file);
   if (ext === 'dxf') return importDXFFile(file);
   if (ext === 'stl' || ext === 'obj') return importMeshFile(file);
-  throw new Error(`Don't know how to open “.${ext}” — supported: .tcad .stl .obj .dxf`);
+  throw new Error(tfmt('Don’t know how to open “.{ext}” — supported: .tcad .stl .obj .dxf', { ext }));
 }
 
 export const IMPORT_ACCEPT = '.tcad,.json,.stl,.obj,.dxf';

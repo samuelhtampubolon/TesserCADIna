@@ -221,11 +221,11 @@ theirs = structuredClone(base); theirs.features[0].params.w = 100;
 r = M.mergeDocuments(base, ours, theirs);
 const sum = M.mergeSummary(r);
 ok('the summary counts conflicts by kind', sum.byKind.param === 1 && !sum.clean, JSON.stringify(sum.byKind));
-ok('and reads as a sentence', /1 conflict to answer/.test(sum.headline), sum.headline);
-ok('each conflict renders as one line', /here 80, there 100/.test(sum.lines[0]), sum.lines[0]);
+ok('and reads as a sentence', /1 konflik untuk dijawab/.test(sum.headline), sum.headline);
+ok('each conflict renders as one line', /di sini 80, di sana 100/.test(sum.lines[0]), sum.lines[0]);
 theirs = structuredClone(base); theirs.features.push(feat('z', 'Rib'));
 ok('a clean merge says what it brought in',
-  /1 feature brought in/.test(M.mergeSummary(M.mergeDocuments(base, ours, theirs)).headline),
+  /1 fitur dimasukkan/.test(M.mergeSummary(M.mergeDocuments(base, ours, theirs)).headline),
   M.mergeSummary(M.mergeDocuments(base, ours, theirs)).headline);
 ok('preview does not throw on a missing base', M.previewMerge(null, ours, theirs).ok === false);
 ok('and reports why', /base/.test(M.previewMerge(null, ours, theirs).headline));

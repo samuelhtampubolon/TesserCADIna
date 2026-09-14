@@ -28,6 +28,7 @@
 import { MATERIALS } from '../core/doc.js';
 import { processOf } from './process.js';
 import { standards, limits } from './standards.js';
+import { t as tr, tfmt } from '../core/i18n.js';
 
 /**
  * Yield strength in MPa (N/mm²), and a note on where the number comes from.
@@ -95,7 +96,8 @@ export const ARCHETYPES = {
           ['arm', v.arm, 'Distance from the wall to the load'],
           ['width', v.width, 'Bracket width'],
           ['sf', v.sf, 'Safety factor against yield'],
-          ['allow', `${ctx.yield} / sf`, `Allowable stress, N/mm². Yield for ${ctx.matLabel} is ${ctx.yield} MPa.`],
+          ['allow', `${ctx.yield} / sf`,
+            tfmt('Allowable stress, N/mm². Yield for {material} is {yield} MPa.', { material: ctx.matLabel, 'yield': ctx.yield })],
           ['thick', `max(sqrt(6 * load * arm / (width * allow)), ${ctx.lim.minWall})`,
             'Wall thickness from cantilever bending, floored at the process minimum'],
           ['base', base, 'Length of the fixed leg'],
@@ -110,10 +112,10 @@ export const ARCHETYPES = {
           { type: 'boolean', name: 'L-bracket', params: { op: 'subtract' }, inputs: [2, 4] },
         ],
         rationale: [
-          `Treated as a cantilever with the load at ${v.arm}mm: bending moment ${(v.load * v.arm / 1000).toFixed(1)} N·m.`,
-          `Allowable stress ${allow.toFixed(0)} N/mm², from ${ctx.yield} MPa yield divided by a safety factor of ${v.sf}.`,
-          `Required thickness ${t.toFixed(2)}mm; used ${thick}mm after the ${ctx.lim.minWall}mm process floor.`,
-          `The bend root is a sharp internal corner, which is where it will actually fail. Add a fillet or a gusset before loading it near the limit.`,
+          tfmt('Treated as a cantilever with the load at {arm}mm: bending moment {moment} N·m.', { arm: v.arm, moment: (v.load * v.arm / 1000).toFixed(1) }),
+          tfmt('Allowable stress {allow} N/mm², from {yield} MPa yield divided by a safety factor of {sf}.', { allow: allow.toFixed(0), 'yield': ctx.yield, sf: v.sf }),
+          tfmt('Required thickness {needed}mm; used {used}mm after the {floor}mm process floor.', { needed: t.toFixed(2), used: thick, floor: ctx.lim.minWall }),
+          tr('The bend root is a sharp internal corner, which is where it will actually fail. Add a fillet or a gusset before loading it near the limit.'),
         ],
       };
     },
@@ -145,7 +147,8 @@ export const ARCHETYPES = {
           ['plate_d', v.d, 'Plate depth'],
           ['load', v.load, 'Central load, newtons'],
           ['sf', v.sf, 'Safety factor against yield'],
-          ['allow', `${ctx.yield} / sf`, `Allowable stress, N/mm², for ${ctx.matLabel}`],
+          ['allow', `${ctx.yield} / sf`,
+            tfmt('Allowable stress, N/mm², for {material}', { material: ctx.matLabel })],
           ['thick', `max(sqrt(1.5 * load * min(plate_w, plate_d) / (max(plate_w, plate_d) * allow)), ${Math.max(ctx.lim.minWall, 3)})`,
             'Thickness from a simply-supported strip, floored'],
           ['bolt_r', bolt.clear / 2, `${v.bolt} clearance radius`],
@@ -158,10 +161,10 @@ export const ARCHETYPES = {
           { type: 'boolean', name: 'Bolted plate', params: { op: 'subtract' }, inputs: [0, 2] },
         ],
         rationale: [
-          `Sized as a simply-supported strip across the ${span}mm span with the load at mid-span.`,
-          `Allowable stress ${allow.toFixed(0)} N/mm² from ${ctx.yield} MPa yield and a safety factor of ${v.sf}.`,
-          `Required thickness ${t.toFixed(2)}mm; used ${thick}mm after flooring at ${Math.max(ctx.lim.minWall, 3)}mm.`,
-          `Bolts are on a circular pattern about the centre. For a rectangular pattern, change the pattern feature's type in the tree.`,
+          tfmt('Sized as a simply-supported strip across the {span}mm span with the load at mid-span.', { span }),
+          tfmt('Allowable stress {allow} N/mm² from {yield} MPa yield and a safety factor of {sf}.', { allow: allow.toFixed(0), 'yield': ctx.yield, sf: v.sf }),
+          tfmt('Required thickness {needed}mm; used {used}mm after flooring at {floor}mm.', { needed: t.toFixed(2), used: thick, floor: Math.max(ctx.lim.minWall, 3) }),
+          tr('Bolts are on a circular pattern about the centre. For a rectangular pattern, change the pattern feature’s type in the tree.'),
         ],
       };
     },
@@ -189,7 +192,7 @@ export const ARCHETYPES = {
           ['shaft_len', v.len, 'Shaft length'],
           ['sf', v.sf, 'Safety factor against shear yield'],
           ['allow', `${(ctx.yield * 0.577).toFixed(0)} / sf`,
-            `Allowable shear, N/mm². Shear yield taken as 0.577 × ${ctx.yield} MPa tensile, von Mises.`],
+            tfmt('Allowable shear, N/mm². Shear yield taken as 0.577 × {yield} MPa tensile, von Mises.', { 'yield': ctx.yield })],
           ['shaft_d', `max(cbrt(16 * torque * 1000 / (pi * allow)), 4)`,
             'Diameter from torsion of a solid round section'],
           ...(v.hollow ? [['bore', `shaft_d * 0.5`, 'Through-bore, half the outside diameter']] : []),
@@ -198,13 +201,13 @@ export const ARCHETYPES = {
           ? [{ type: 'tube', name: 'Shaft', params: { ro: 'shaft_d/2', ri: 'bore/2', h: 'shaft_len' } }]
           : [{ type: 'cylinder', name: 'Shaft', params: { r: 'shaft_d/2', h: 'shaft_len' } }],
         rationale: [
-          `Solid round section in pure torsion: d = cbrt(16T / πτ).`,
-          `Allowable shear ${allow.toFixed(0)} N/mm², from ${ctx.yield} MPa tensile yield, a von Mises factor of 0.577, and a safety factor of ${v.sf}.`,
-          `Required diameter ${d.toFixed(2)}mm; used ${dia}mm.`,
+          tr('Solid round section in pure torsion: d = cbrt(16T / πτ).'),
+          tfmt('Allowable shear {allow} N/mm², from {yield} MPa tensile yield, a von Mises factor of 0.577, and a safety factor of {sf}.', { allow: allow.toFixed(0), 'yield': ctx.yield, sf: v.sf }),
+          tfmt('Required diameter {needed}mm; used {used}mm.', { needed: d.toFixed(2), used: dia }),
           v.hollow
-            ? `A bore at half the outside diameter removes a quarter of the mass and only about 6% of the torsional stiffness, because material near the axis does almost no work.`
-            : `Torsion is resisted almost entirely by the outer material, so a through-bore would cost very little strength if you need to save mass.`,
-          `No keyway, no shoulder and no fatigue allowance. A rotating shaft under reversing load needs a fatigue check this does not do.`,
+            ? tr('A bore at half the outside diameter removes a quarter of the mass and only about 6% of the torsional stiffness, because material near the axis does almost no work.')
+            : tr('Torsion is resisted almost entirely by the outer material, so a through-bore would cost very little strength if you need to save mass.'),
+          tr('No keyway, no shoulder and no fatigue allowance. A rotating shaft under reversing load needs a fatigue check this does not do.'),
         ],
       };
     },
@@ -231,7 +234,8 @@ export const ARCHETYPES = {
           ['pressure', v.pressure, 'Internal pressure, bar'],
           ['tube_len', v.len, 'Length'],
           ['sf', v.sf, 'Safety factor against yield'],
-          ['allow', `${ctx.yield} / sf`, `Allowable stress, N/mm², for ${ctx.matLabel}`],
+          ['allow', `${ctx.yield} / sf`,
+            tfmt('Allowable stress, N/mm², for {material}', { material: ctx.matLabel })],
           ['wall', `max(pressure * 0.1 * bore / (2 * allow), ${ctx.lim.minWall})`,
             'Wall thickness from thin-wall hoop stress, floored at the process minimum'],
         ],
@@ -239,13 +243,13 @@ export const ARCHETYPES = {
           { type: 'tube', name: 'Pressure tube', params: { ro: 'bore/2 + wall', ri: 'bore/2', h: 'tube_len' } },
         ],
         rationale: [
-          `Thin-wall hoop stress: t = pD / 2σ, with ${v.pressure} bar as ${p.toFixed(2)} N/mm².`,
-          `Allowable stress ${allow.toFixed(0)} N/mm² from ${ctx.yield} MPa yield and a safety factor of ${v.sf}.`,
-          `Required wall ${t.toFixed(3)}mm; used ${wall}mm after the ${ctx.lim.minWall}mm process floor.`,
+          tfmt('Thin-wall hoop stress: t = pD / 2σ, with {bar} bar as {nmm} N/mm².', { bar: v.pressure, nmm: p.toFixed(2) }),
+          tfmt('Allowable stress {allow} N/mm² from {yield} MPa yield and a safety factor of {sf}.', { allow: allow.toFixed(0), 'yield': ctx.yield, sf: v.sf }),
+          tfmt('Required wall {needed}mm; used {used}mm after the {floor}mm process floor.', { needed: t.toFixed(3), used: wall, floor: ctx.lim.minWall }),
           t / v.bore > 0.05
-            ? `At ${(t / v.bore * 100).toFixed(0)}% of the bore this is no longer thin-walled, so the formula understates the peak stress. Use a thick-wall (Lamé) calculation before building it.`
-            : `Wall-to-bore ratio is under 5%, so the thin-wall assumption holds.`,
-          `Ends, joints and fittings are not covered. A pressure vessel is a regulated item in most jurisdictions.`,
+            ? tfmt('At {percent}% of the bore this is no longer thin-walled, so the formula understates the peak stress. Use a thick-wall (Lamé) calculation before building it.', { percent: (t / v.bore * 100).toFixed(0) })
+            : tr('Wall-to-bore ratio is under 5%, so the thin-wall assumption holds.'),
+          tr('Ends, joints and fittings are not covered. A pressure vessel is a regulated item in most jurisdictions.'),
         ],
       };
     },
@@ -269,7 +273,7 @@ export const ARCHETYPES = {
           ['inner_d', v.id, 'Internal depth, before clearance'],
           ['inner_h', v.ih, 'Internal height, before clearance'],
           ['clear', v.clear, 'Clearance around the contents on every side'],
-          ['wall', wall, `Wall thickness: 1.5 × the ${ctx.process.label} minimum of ${ctx.lim.minWall}mm`],
+          ['wall', wall, tfmt('Wall thickness: 1.5 × the {process} minimum of {mm}mm', { process: ctx.process.label, mm: ctx.lim.minWall })],
           ['cav_w', 'inner_w + clear*2', 'Cavity width'],
           ['cav_d', 'inner_d + clear*2', 'Cavity depth'],
           ['cav_h', 'inner_h + clear*2', 'Cavity height'],
@@ -280,12 +284,12 @@ export const ARCHETYPES = {
           { type: 'boolean', name: 'Enclosure', params: { op: 'subtract' }, inputs: [0, 1] },
         ],
         rationale: [
-          `Walls at ${wall}mm: one and a half times the ${ctx.lim.minWall}mm minimum for ${ctx.process.label}, which is where a wall stops being fragile.`,
-          `Outside dimensions follow the contents through expressions, so changing what goes inside resizes the box.`,
-          `Open-topped: it is a tray until you add a lid. Model the lid as a second body so both can be made in the same run.`,
+          tfmt('Walls at {wall}mm: one and a half times the {minimum}mm minimum for {process}, which is where a wall stops being fragile.', { wall, minimum: ctx.lim.minWall, process: ctx.process.label }),
+          tr('Outside dimensions follow the contents through expressions, so changing what goes inside resizes the box.'),
+          tr('Open-topped: it is a tray until you add a lid. Model the lid as a second body so both can be made in the same run.'),
           ctx.process.kind === 'formative'
-            ? `This process needs draft on every vertical face, and there is none here yet. Add it before cutting a tool.`
-            : `No draft applied, which is correct for ${ctx.process.label}.`,
+            ? tr('This process needs draft on every vertical face, and there is none here yet. Add it before cutting a tool.')
+            : tfmt('No draft applied, which is correct for {process}.', { process: ctx.process.label }),
         ],
       };
     },
@@ -306,7 +310,7 @@ export const ARCHETYPE_IDS = Object.keys(ARCHETYPES);
  */
 export function synthesise(id, values = {}, opts = {}) {
   const arch = ARCHETYPES[id];
-  if (!arch) throw new Error(`Unknown archetype “${id}”`);
+  if (!arch) throw new Error(tfmt('Unknown archetype “{id}”', { id }));
 
   const s = standards();
   const material = opts.material || s.material || 'aluminium';
@@ -335,13 +339,13 @@ export function synthesise(id, values = {}, opts = {}) {
   const warnings = [];
 
   if (material === 'concrete' || material === 'rubber' || material === 'glass') {
-    warnings.push(`${ctx.matLabel} is not a structural material in the way this calculation assumes. The numbers below are arithmetic, not engineering.`);
+    warnings.push(tfmt('{material} is not a structural material in the way this calculation assumes. The numbers below are arithmetic, not engineering.', { material: ctx.matLabel }));
   }
   if (material === 'pla' || material === 'abs' || material === 'nylon') {
     warnings.push('Printed plastics are markedly weaker across layers than along them, and creep under sustained load. Orientation on the build plate matters as much as the thickness here.');
   }
   if (v.sf != null && v.sf < 1.5) {
-    warnings.push(`A safety factor of ${v.sf} leaves nothing for material variation, stress concentration or the load being larger than you think.`);
+    warnings.push(tfmt('A safety factor of {sf} leaves nothing for material variation, stress concentration or the load being larger than you think.', { sf: v.sf }));
   }
 
   return {
@@ -365,7 +369,7 @@ export function synthesise(id, values = {}, opts = {}) {
 export function briefNotes(result, values) {
   const answers = Object.entries(values).map(([k, x]) => `${k}=${x}`).join(', ');
   return [
-    `Generated from a design brief: ${result.label}.`,
+    tfmt('Generated from a design brief: {label}.', { label: result.label }),
     `Requirements: ${answers}`,
     `Material: ${result.material} (${result.strengthNote})`,
     `Process assumed: ${result.process}`,

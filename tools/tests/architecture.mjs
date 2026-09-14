@@ -251,6 +251,7 @@ const PRIOR_ART = /freecad|librecad|openscad|solvespace|brlcad|qcad|cadquery|ble
 const EXPECTED_MENTIONS = new Set([
   'ui/operators.js',      // credits Blender for modal transforms
   'ui/commands.js',       // two palette search keywords
+  'core/lang-prose.js',   // the Indonesian half of those same two keywords
   'intel/drawing.js',     // contrasts with Blender's approach
   'intel/spec.js',        // argues with OpenSCAD's premise
 ]);
@@ -265,7 +266,7 @@ const unexpected = mentions.filter(m => !EXPECTED_MENTIONS.has(m.split(':')[0]))
 ok('no module mentions a prior-art project outside the four that explain why',
   unexpected.length === 0, unexpected.join(', '));
 ok('and the count ATTRIBUTION.md publishes is the count there is',
-  mentions.length === 5, `${mentions.length}: ${mentions.join(', ')}`);
+  mentions.length === 7, `${mentions.length}: ${mentions.join(', ')}`);
 ok('the originality detector is not vacuous', PRIOR_ART.test('ported from FreeCAD'));
 
 /* ---------------------------- 10. the tooling runs on Windows too */

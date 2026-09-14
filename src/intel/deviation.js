@@ -23,6 +23,7 @@
  */
 import * as THREE from 'three';
 import { CATALOG, MATERIALS, UNITS, makeFeature, newDocument } from '../core/doc.js';
+import { t, tfmt } from '../core/i18n.js';
 
 /* --------------------------------------------------------- triangle store */
 
@@ -329,32 +330,35 @@ export function deviationVerdict({
   if (unit && max > tol) {
     return {
       grade: 'units', severity: 'block',
-      label: `The mesh is ${scale < 1 ? `1/${(1 / scale).toFixed(4).replace(/0+$/, '')}` : scale.toFixed(4).replace(/\.?0+$/, '')} the size of the model, which is ${unit[1]}, not a deviation. Rescale the import rather than chasing the shape.`,
+      label: tfmt('The mesh is {factor} the size of the model, which is {reading}, not a deviation. Rescale the import rather than chasing the shape.', { factor: scale < 1 ? `1/${(1 / scale).toFixed(4).replace(/0+$/, '')}` : scale.toFixed(4).replace(/\.?0+$/, ''), reading: t(unit[1]) }),
     };
   }
   if (shifted) {
     const v = offsetVector ? ` (${offsetVector.map(x => x.toFixed(2)).join(', ')})` : '';
     return {
       grade: 'shifted', severity: 'warn',
-      label: `The mesh sits ${offset.toFixed(3)}mm away from the model${v}. Register the two together before reading anything else into the shape.`,
+      label: tfmt('The mesh sits {mm}mm away from the model{axes}. Register the two together before reading anything else into the shape.', { mm: offset.toFixed(3), axes: v }),
     };
   }
   if (oneSided && max > tol) {
     return {
       grade: outward ? 'oversize' : 'undersize', severity: 'warn',
-      label: `Every difference is on the ${outward ? 'outside' : 'inside'}, up to ${max.toFixed(3)}mm. The mesh is uniformly ${outward ? 'larger' : 'smaller'} than the model, not misplaced.`,
+      label: tfmt(outward
+        ? 'Every difference is on the outside, up to {mm}mm. The mesh is uniformly larger than the model, not misplaced.'
+        : 'Every difference is on the inside, up to {mm}mm. The mesh is uniformly smaller than the model, not misplaced.',
+      { mm: max.toFixed(3) }),
     };
   }
   if (max <= tol) {
-    return { grade: 'match', severity: 'ok', label: `Within ${tol.toFixed(3)}mm everywhere. This is the same part.` };
+    return { grade: 'match', severity: 'ok', label: tfmt('Within {mm}mm everywhere. This is the same part.', { mm: tol.toFixed(3) }) };
   }
   if (rel < 0.002 && outsideFraction < 0.05) {
-    return { grade: 'tessellation', severity: 'ok', label: `Peak ${max.toFixed(3)}mm on ${(outsideFraction * 100).toFixed(1)}% of samples, spread thinly: consistent with a coarser tessellation of the same shape.` };
+    return { grade: 'tessellation', severity: 'ok', label: tfmt('Peak {mm}mm on {percent}% of samples, spread thinly: consistent with a coarser tessellation of the same shape.', { mm: max.toFixed(3), percent: (outsideFraction * 100).toFixed(1) }) };
   }
   if (rel < 0.02) {
-    return { grade: 'detail', severity: 'warn', label: `Peak ${max.toFixed(3)}mm. Something small differs: a fillet, a chamfer or a hole size.` };
+    return { grade: 'detail', severity: 'warn', label: tfmt('Peak {p1}mm. Something small differs: a fillet, a chamfer or a hole size.', { p1: max.toFixed(3) }) };
   }
-  return { grade: 'different', severity: 'block', label: `Peak ${max.toFixed(3)}mm, ${(rel * 100).toFixed(1)}% of the part size. These are different shapes.` };
+  return { grade: 'different', severity: 'block', label: tfmt('Peak {mm}mm, {percent}% of the part size. These are different shapes.', { mm: max.toFixed(3), percent: (rel * 100).toFixed(1) }) };
 }
 
 /**
@@ -393,11 +397,11 @@ export function importIntent(json) {
   const errors = [];
   let data = json;
   if (typeof json === 'string') {
-    try { data = JSON.parse(json); } catch (e) { return { doc: null, errors: [`Not valid JSON: ${e.message}`], notes }; }
+    try { data = JSON.parse(json); } catch (e) { return { doc: null, errors: [tfmt('Not valid JSON: {message}', { message: e.message })], notes }; }
   }
   if (!data || typeof data !== 'object') return { doc: null, errors: ['Not a design-intent file.'], notes };
   if (data.format && data.format !== 'tessercad.design-intent') {
-    return { doc: null, errors: [`This is a "${data.format}" file, not a design-intent file.`], notes };
+    return { doc: null, errors: [tfmt('This is a "{format}" file, not a design-intent file.', { format: data.format })], notes };
   }
   if (!Array.isArray(data.features)) return { doc: null, errors: ['No feature list in this file.'], notes };
 
@@ -418,7 +422,7 @@ export function importIntent(json) {
   const idOfName = new Map();
   doc.features = data.features.map((f, i) => {
     const type = CATALOG[f.type] ? f.type : null;
-    if (!type) { errors.push(`Feature "${f.name}" has unknown type "${f.type}".`); return null; }
+    if (!type) { errors.push(tfmt('Feature "{name}" has unknown type "{type}".', { name: f.name, type: f.type })); return null; }
     const made = makeFeature(type, { name: f.name || CATALOG[type].label });
     made.id = `fi${i}`;
     made.params = { ...made.params, ...(f.parameters || {}) };
@@ -439,7 +443,7 @@ export function importIntent(json) {
       const m = MATERIALS[f.material];
       made.appearance = { ...made.appearance, color: m.color, metalness: m.metal, roughness: m.rough };
     } else if (f.material) {
-      notes.push(`Feature "${f.name}" names material "${f.material}", which this library does not have. Using steel.`);
+      notes.push(tfmt('Feature "{feature}" names material "{material}", which this library does not have. Using steel.', { feature: f.name, material: f.material }));
     }
     if (!idOfName.has(f.name)) idOfName.set(f.name, made.id);
     return made;
@@ -450,16 +454,16 @@ export function importIntent(json) {
     if (!made) return;
     made.inputs = (f.consumes || []).map(name => {
       if ((counts.get(name) || 0) > 1) {
-        notes.push(`"${f.name}" consumes "${name}", and more than one feature has that name. The first was used.`);
+        notes.push(tfmt('"{feature}" consumes "{name}", and more than one feature has that name. The first was used.', { feature: f.name, name }));
       }
       const id = idOfName.get(name);
-      if (!id) errors.push(`"${f.name}" consumes "${name}", which this file does not define.`);
+      if (!id) errors.push(tfmt('"{name}" consumes "{p1}", which this file does not define.', { name: f.name, p1: name }));
       return id;
     }).filter(Boolean);
   });
 
   if (data.version && data.version > 1) {
-    notes.push(`This file was written by a newer intent format (version ${data.version}); anything it added has been ignored.`);
+    notes.push(tfmt('This file was written by a newer intent format (version {version}); anything it added has been ignored.', { version: data.version }));
   }
   return { doc: errors.length ? null : doc, errors, notes };
 }
@@ -481,13 +485,13 @@ export function intentRoundTrip(intent) {
   if ((src.parameters || []).length !== doc.params.length) differences.push('Parameter count changed.');
   (src.parameters || []).forEach((p, i) => {
     const q = doc.params[i];
-    if (!q) { differences.push(`Parameter ${p.name} was lost.`); return; }
+    if (!q) { differences.push(tfmt('Parameter {name} was lost.', { name: p.name })); return; }
     if (q.name !== p.name) differences.push(`Parameter ${i}: ${p.name} became ${q.name}.`);
     if (String(q.value) !== String(p.expression ?? p.resolved)) differences.push(`Parameter ${p.name}: ${p.expression} became ${q.value}.`);
   });
   (src.features || []).forEach((f, i) => {
     const g = doc.features[i];
-    if (!g) { differences.push(`Feature ${f.name} was lost.`); return; }
+    if (!g) { differences.push(tfmt('Feature {name} was lost.', { name: f.name })); return; }
     if (g.name !== f.name) differences.push(`Feature ${i}: ${f.name} became ${g.name}.`);
     if (g.type !== f.type) differences.push(`${f.name}: type ${f.type} became ${g.type}.`);
     for (const [k, v] of Object.entries(f.parameters || {})) {
@@ -505,7 +509,7 @@ export function deviationSummary(map) {
   if (!map?.ok) return { ok: false, line: map?.reason || 'No comparison.' };
   return {
     ok: true,
-    line: `${map.samples} points sampled: peak ${map.max.toFixed(3)}mm, RMS ${map.rms.toFixed(3)}mm, 95% within ${map.p95.toFixed(3)}mm. ${map.verdict.label}`,
+    line: tfmt('{samples} points sampled: peak {p1}mm, RMS {p2}mm, 95% within {p3}mm. {label}', { samples: map.samples, p1: map.max.toFixed(3), p2: map.rms.toFixed(3), p3: map.p95.toFixed(3), label: map.verdict.label }),
     severity: map.verdict.severity,
     grade: map.verdict.grade,
   };

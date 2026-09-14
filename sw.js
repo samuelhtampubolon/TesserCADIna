@@ -20,7 +20,7 @@
  * is worse than one that is a deploy behind, and the fetch below still
  * refreshes the cache in the background, so the next open is current.
  */
-const VERSION = 'tessercad-b0f84a257ee1';
+const VERSION = 'tessercadina-cc513d71db35';
 const FILES = [
   "assets/favicon.svg",
   "index.html",
@@ -34,6 +34,8 @@ const FILES = [
   "src/core/expr.js",
   "src/core/geometry.js",
   "src/core/i18n.js",
+  "src/core/lang-interface.js",
+  "src/core/lang-prose.js",
   "src/core/rebuild.js",
   "src/draft/draft.js",
   "src/draft/dxf.js",
@@ -103,7 +105,7 @@ self.addEventListener('install', (e) => {
 self.addEventListener('activate', (e) => {
   e.waitUntil((async () => {
     for (const key of await caches.keys()) {
-      if (key !== VERSION && key.startsWith('tessercad-')) await caches.delete(key);
+      if (key !== VERSION && key.startsWith('tessercadina-')) await caches.delete(key);
     }
     await self.clients.claim();
   })());

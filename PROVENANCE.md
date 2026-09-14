@@ -28,8 +28,8 @@ gives you legal advice has accurate facts to work from.
 
 | | |
 |---|---|
-| Application source | 23,852 lines across 52 modules (`src/`) |
-| Test and build tooling | 8,770 lines across 38 files (`tools/`, `desktop/`) |
+| Application source | 25,301 lines across 54 modules (`src/`) |
+| Test and build tooling | 9,403 lines across 41 files (`tools/`, `desktop/`) |
 | Third-party code included | three.js r169, vendored unmodified (`vendor/`) |
 | Runtime dependencies fetched at install | none |
 
@@ -142,7 +142,7 @@ repository checks and fails the build over.
 
 | | |
 |---|---|
-| Headless checks | 898 across 16 suites, about four seconds, downloads nothing |
+| Headless checks | 935 across 17 suites, about four seconds, downloads nothing |
 | Browser checks | 394 across 11 browser suites, in a real Chromium |
 | Desktop checks | 17, driving the real application in a real Electron window |
 | Security checks | 76, which run attacks rather than assert outcomes |

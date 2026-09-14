@@ -9,6 +9,7 @@ import { el, clear, promptDialog, icon, emptyState, contextMenu, verb } from './
 import { attachLongPress } from './mobile.js';
 import { store, catalogOf, MATERIALS } from '../core/doc.js';
 import { ICON_FOR } from './commands.js';
+import { t, tfmt } from '../core/i18n.js';
 
 let filterText = '';
 
@@ -16,10 +17,10 @@ export function renderLeftPanel(app) {
   const host = clear(document.getElementById('leftBody'));
   const title = document.getElementById('leftTitle');
   if (app.workspace === 'draft') {
-    title.textContent = 'Layers & objects';
+    title.textContent = t('Layers & objects');
     renderLayers(app, host);
   } else {
-    title.textContent = app.workspace === 'sim' ? 'Bodies' : 'Feature tree';
+    title.textContent = t(app.workspace === 'sim' ? 'Bodies' : 'Feature tree');
     renderFeatures(app, host);
   }
 }
@@ -140,7 +141,7 @@ function renderFeatures(app, host) {
   // prevents is one directive away from working, and injected markup alone is
   // enough to redress the interface. This message has no markup to lose.
   if (q && !shown) {
-    host.appendChild(emptyState('No match', { text: `Nothing called “${filterText}”.` }, 'search'));
+    host.appendChild(emptyState('No match', { text: tfmt('Nothing called “{name}”.', { name: filterText }) }, 'search'));
   }
 
   if (build) {
@@ -148,7 +149,7 @@ function renderFeatures(app, host) {
     if (bad.length) {
       host.appendChild(el('div', { class: 'banner err', style: { marginTop: '10px' } }, [
         icon('warning', { size: 15 }),
-        el('div', {}, [el('b', { text: `${bad.length} feature${bad.length > 1 ? 's' : ''} failed to build` }), el('br'), bad[0].error]),
+        el('div', {}, [el('b', { text: tfmt('{n} features failed to build', { n: bad.length }) }), el('br'), bad[0].error]),
       ]));
     }
   }
@@ -156,7 +157,7 @@ function renderFeatures(app, host) {
   if (app.isolated) {
     host.appendChild(el('div', { class: 'banner info', style: { marginTop: '8px' } }, [
       icon('target', { size: 15 }),
-      el('div', {}, [`Isolation is on — ${app.isolated.size} shown. `, el('a', { href: '#', text: 'Exit', onclick: (e) => { e.preventDefault(); app.isolate(); } })]),
+      el('div', {}, [tfmt('Isolation is on — {size} shown. ', { size: app.isolated.size }), el('a', { href: '#', text: 'Exit', onclick: (e) => { e.preventDefault(); app.isolate(); } })]),
     ]));
   }
 }
@@ -199,7 +200,7 @@ function renderLayers(app, host) {
   for (const l of draw.layers) {
     const row = el('div', {
       class: `layer-row ${draw.activeLayer === l.id ? 'active' : ''}`,
-      title: `${l.name} — click to make active, double-click to rename`,
+      title: tfmt('{name} — click to make active, double-click to rename', { name: l.name }),
       onclick: () => {
         store.edit('Active layer', (d) => { d.draw.activeLayer = l.id; }, { rebuild: false });
         app.refreshUI();
@@ -269,7 +270,7 @@ function renderLayers(app, host) {
         app.draft.invalidate();
         app.refreshUI();
       },
-      title: `Select all ${type} objects`,
+      title: tfmt('Select all {type} objects', { type }),
     }, [
       el('span', { class: 'tn-glyph' }, [icon(TYPE_ICON[type] || 'point', { size: 14 })]),
       el('span', { class: 'tn-name', text: type }),

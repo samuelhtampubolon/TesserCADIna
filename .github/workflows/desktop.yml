@@ -143,6 +143,61 @@ jobs:
         working-directory: desktop
         run: npm run dist
 
+      # A regression guard on the Windows download, and the only thing that has
+      # ever measured it.
+      #
+      # The caps are deliberately just above what the build actually produces
+      # today (135 MB zip, 98 MB installer), not a target. The README used to
+      # promise "around 80 MB, under 90" and nothing checked it; the first run
+      # of this step showed the real figures, and the README now states them.
+      # What these numbers are for is the regression: if `electronLanguages`
+      # were dropped, or `dist-desktop` ever got bundled into itself, the build
+      # goes red instead of the download quietly doubling. Raising a cap should
+      # take a reason and a commit message, which is the point of it being here.
+      #
+      # Windows only: these are claims about the files that page offers, and
+      # the Linux artefacts are not those files.
+      - name: The Windows download is the size the README promises
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          # Integer arithmetic throughout. The Windows runner's bash is Git Bash,
+          # which ships no `bc`, and reaching for it failed this step rather
+          # than the artefact: the size it was meant to report never printed.
+          zip_cap=145
+          exe_cap=105
+          fail=0
+          found=0
+          shopt -s nullglob
+          for f in dist-desktop/*windows*.zip dist-desktop/*setup.exe; do
+            found=1
+            case "$f" in
+              *.zip) cap=$zip_cap ;;
+              *)     cap=$exe_cap ;;
+            esac
+            bytes=$(stat -c%s "$f")
+            printf '%-46s %4d.%02d MB   (cap %d MB)\n' "$(basename "$f")" \
+              "$((bytes / 1048576))" "$(((bytes % 1048576) * 100 / 1048576))" "$cap"
+            if [ "$bytes" -gt $((cap * 1024 * 1024)) ]; then
+              echo "   ^ over its cap: the download has grown, not merely drifted"
+              fail=1
+            fi
+          done
+          # nullglob means no match is an empty loop, so without this the gate
+          # would pass loudest exactly when there was nothing to measure.
+          if [ "$found" = 0 ]; then
+            echo "No Windows artefact to measure. The packaging step should have produced one:"
+            ls -la dist-desktop || true
+            exit 1
+          fi
+          if [ "$fail" = 1 ]; then
+            echo
+            echo "Find what was added before raising a cap. The usual causes are"
+            echo "a dropped electronLanguages key in desktop/electron-builder.yml"
+            echo "or a files filter that started matching more than it should."
+            exit 1
+          fi
+
       # A hash lets anyone confirm the file they downloaded is the file this
       # workflow produced. It is the only verification available without a
       # code-signing certificate, and it is worth more than a self-signed one.
@@ -171,7 +226,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: tessercad-${{ matrix.artifact }}
+          name: tessercadina-${{ matrix.artifact }}
           path: |
             dist-desktop/*.exe
             dist-desktop/*.zip
