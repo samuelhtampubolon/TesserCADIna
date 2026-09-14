@@ -3552,7 +3552,7 @@ class App {
             el('span', { class: 'mono', text: `${f.shaft.upper >= 0 ? '+' : ''}${f.shaft.upper.toFixed(3)} / ${f.shaft.lower >= 0 ? '+' : ''}${f.shaft.lower.toFixed(3)}` }),
             el('span', { class: 'mono', text: f.kind === 'interference'
               ? tfmt('{p1} to {p2} tight', { p1: Math.abs(f.maxClearance).toFixed(3), p2: Math.abs(f.minClearance).toFixed(3) })
-              : `${f.minClearance.toFixed(3)} to ${f.maxClearance.toFixed(3)}` }),
+              : tfmt('{min} to {max}', { min: f.minClearance.toFixed(3), max: f.maxClearance.toFixed(3) }) }),
           ])),
         ]),
         el('div', { class: 'hint', text: tfmt('IT6 at this size is {it6} µm, IT7 {it7} µm, IT11 {it11} µm. Grades widen with size, which is why a fit is a letter and a grade rather than a number.', { it6: fmt(Tol.itGrade(6, D) * 1000, 0), it7: fmt(Tol.itGrade(7, D) * 1000, 0), it11: fmt(Tol.itGrade(11, D) * 1000, 0) }) }),
@@ -3612,7 +3612,7 @@ class App {
         diffHost.appendChild(el('div', { class: 'banner err', text: tfmt('{n} errors. Nothing will be applied until they are fixed.', { n: r.errors.length }) }));
         for (const e of r.errors.slice(0, 12)) {
           diffHost.appendChild(el('div', { class: 'spec-err' }, [
-            el('span', { class: 'spec-line', text: e.line ? `line ${e.line}` : 'document' }),
+            el('span', { class: 'spec-line', text: e.line ? tfmt('line {n}', { n: e.line }) : 'document' }),
             el('span', { text: e.message }),
             e.text ? el('code', { text: e.text }) : el('span'),
           ]));

@@ -310,7 +310,7 @@ const brief = await page.evaluate(() => {
     out[id] = { params: r.params.length, feats: r.features.length, rationale: r.rationale.length };
   }
   const grab = (load) => Number(B.synthesise('bracket', { load, arm: 80, width: 40, sf: 2.5, bolt: 'M6' }, { material: 'aluminium' })
-    .rationale.join(' ').match(/Required thickness ([\d.]+)/)[1]);
+    .rationale.join(" ").match(/Tebal yang dibutuhkan ([\d.]+)/)[1]);
   const lt = grab(100), ht = grab(1600);
   return { out, lt, ht, ratio: ht / lt };
 });

@@ -90,7 +90,7 @@ const t = s.title;
 console.log('  title:', JSON.stringify({ name: t.name, material: t.material, scale: t.scale, proj: t.projection, tol: t.tolerance }));
 ok('the title block names the part, material, scale and units',
   t.name === 'Test plate' && /Alumin/.test(t.material) && t.scale && t.units === 'mm');
-ok('it states the projection convention', t.projection === 'FIRST ANGLE');
+ok('it states the projection convention', t.projection === 'SUDUT PERTAMA');
 
 // The stated symbol and the actual layout must agree, or the reader mirrors
 // the part. First angle puts the view from above BELOW the front view.
@@ -107,7 +107,7 @@ const tx = (k) => third.views.find(v => v.key === k).origin[0];
 ok('third angle draws the top view above the front view', ty('top') > ty('front'),
   `top at y=${ty('top')}, front at y=${ty('front')}`);
 ok('and the right-side view to the right of it', tx('right') > tx('front'));
-ok('and relabels the title block', third.title.projection === 'THIRD ANGLE', third.title.projection);
+ok('and relabels the title block', third.title.projection === 'SUDUT KETIGA', third.title.projection);
 ok('the two conventions really are different layouts',
   vx('front') !== tx('front') && vy('front') !== ty('front'));
 ok('but the geometry in a view does not change with the convention',
@@ -120,7 +120,7 @@ ok('the sheet renders as SVG', svg.startsWith('<svg') && svg.endsWith('</svg>'),
 ok('the SVG viewBox is the paper size', svg.includes(`viewBox="0 0 ${SHEETS.a3l.w} ${SHEETS.a3l.h}"`));
 ok('hidden lines are dashed in the SVG', svg.includes('stroke-dasharray'));
 ok('every view label is on the sheet',
-  ['FRONT', 'TOP', 'RIGHT', 'ISO'].every(l => svg.includes(`>${l}<`)));
+  ['DEPAN', 'ATAS', 'KANAN', 'ISO'].every(l => svg.includes(`>${l}<`)));
 ok('the SVG has no NaN coordinates', !/NaN/.test(svg), (svg.match(/NaN/g) || []).length + ' occurrences');
 
 // Draft document, and through it DXF

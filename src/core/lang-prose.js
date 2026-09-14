@@ -729,4 +729,12 @@ export const PROSE = {
   'Ground plane collision': 'Tabrakan bidang tanah',
   'X/Y/Z axis · ⇧X plane · type a number · ⇧ precise · ⌃ snap · ⏎ confirm · esc cancel': 'Sumbu X/Y/Z · ⇧X bidang · ketik angka · ⇧ presisi · ⌃ snap · ⏎ konfirmasi · esc batal',
   'Move build slot': 'Pindahkan slot bangun',
+
+  /* ---- x ---- */
+
+  /* ---- templates: the fits table ---- */
+  '{min} to {max}': '{min} sampai {max}',
+
+  /* ---- templates: the spec editor ---- */
+  'line {n}': 'baris {n}',
 };
