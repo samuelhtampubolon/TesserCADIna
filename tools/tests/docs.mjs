@@ -71,8 +71,14 @@ console.log(`     headless: ${headlessTotal} checks / ${headlessSuites} suites Â
 
 /* ------------------------------------------ what the documents claim it is */
 
+// dist/README.md belongs here rather than being remembered at each call site.
+// It was reachable from two of the four checks below and from neither of the
+// other two, and the one that would have caught it was the one it was missing
+// from: it promised a download of "sekitar 80 MB" for a commit after every
+// other page had been corrected to the measured figure. A document a reader
+// lands on is a document the suite reads.
 const DOCS = ['README.md', 'SECURITY.md', 'ARCHITECTURE.md', 'COMPARISON.md',
-  'ATTRIBUTION.md', 'PROVENANCE.md'];
+  'ATTRIBUTION.md', 'PROVENANCE.md', 'dist/README.md'];
 
 /**
  * Any integer adjacent to the word "headless", or to this suite's own suite
@@ -155,7 +161,7 @@ ok('the desktop build pins a supported Electron major',
 const repoUrl = JSON.parse(readFileSync(join(root, 'desktop/package.json'), 'utf8')).repository.url;
 const [, owner, repoName] = /github\.com\/([A-Za-z0-9_.-]+)\/([A-Za-z0-9_.-]+?)(?:\.git)?$/.exec(repoUrl);
 
-const LINKED = [...DOCS, 'dist/README.md', 'src/ui/commands.js', 'src/main.js'];
+const LINKED = [...DOCS, 'src/ui/commands.js', 'src/main.js'];
 
 // One exemption, as narrow as it can be made.
 //
@@ -349,7 +355,7 @@ ok('PROVENANCE does not pin a commit count that goes stale on the next commit',
 const version = JSON.parse(readFileSync(join(root, 'desktop/package.json'), 'utf8')).version;
 const FILENAME = /TesserCADIna-(\d+\.\d+\.\d+)-/g;
 const misnamed = [];
-for (const doc of [...DOCS, 'PROVENANCE.md', 'dist/README.md']) {
+for (const doc of DOCS) {
   const path = join(root, doc);
   if (!existsSync(path)) continue;
   for (const m of readFileSync(path, 'utf8').matchAll(FILENAME)) {
