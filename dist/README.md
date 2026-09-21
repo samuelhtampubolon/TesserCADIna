@@ -25,7 +25,7 @@ benar-benar mengukurnya.
 | **Belum ada rilis?** | Setiap build "Desktop build" yang hijau menyimpan berkas yang sama sebagai artefak di tab **Actions** |
 | **Tanpa unduhan** | Versi web adalah aplikasi yang sama dan tidak memasang apa pun |
 
-Di Windows, ambil **`.zip`** (`TesserCADIna-1.1.0-windows-x64.zip`) bukan installer.
+Di Windows, ambil **`.zip`** (`TesserCADIna-1.2.0-windows-x64.zip`) bukan installer.
 Ekstrak, jalankan `TesserCADIna.exe`. There is no macOS build.
 
 ## Membangun sendiri
