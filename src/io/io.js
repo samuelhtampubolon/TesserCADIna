@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Samuel Hasudungan Tampubolon. MIT licensed; see LICENSE.
 /**
  * File input/output: project save & load, mesh import/export, drawing
  * exchange and image capture. Everything happens in the browser — no file

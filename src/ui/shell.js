@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Samuel Hasudungan Tampubolon. MIT licensed; see LICENSE.
 /**
  * Shell widgets: DOM helpers, toasts, modals, the menu system, the command
  * palette, the quick menu and the form controls shared by every panel.

@@ -161,4 +161,4 @@ lapis zip tambahan, dan dihapus otomatis setelah 90 hari. Rilis tidak.
 ## Lisensi
 
 MIT. Lihat [LICENSE](LICENSE), [NOTICE](NOTICE), dan [ATTRIBUTION.md](ATTRIBUTION.md).
-Mesin dan arsitektur berasal dari TesserCAD, MIT, © Samuel Tampubolon.
+Mesin dan arsitektur berasal dari TesserCAD, MIT, © Samuel Hasudungan Tampubolon.

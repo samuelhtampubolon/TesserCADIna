@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Samuel Hasudungan Tampubolon. MIT licensed; see LICENSE.
 /**
  * Tiny synchronous event bus. Every module talks through this instead of
  * holding references to each other, which keeps the dependency graph a tree.

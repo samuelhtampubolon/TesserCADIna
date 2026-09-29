@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Samuel Hasudungan Tampubolon. MIT licensed; see LICENSE.
 /**
  * The timeline: transport controls, per-body tracks, keyframe editing and the
  * build-sequence Gantt view. Rendered as DOM so keys stay clickable and

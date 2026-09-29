@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Samuel Hasudungan Tampubolon. MIT licensed; see LICENSE.
 /**
  * Right panel: context-sensitive properties for the current workspace and
  * selection. Numeric fields accept expressions, so every property in the

@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Samuel Hasudungan Tampubolon. MIT licensed; see LICENSE.
 /**
  * Manufacturing processes: the shared table behind both the Design Doctor and
  * the cost estimate.

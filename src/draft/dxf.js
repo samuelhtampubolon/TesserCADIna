@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Samuel Hasudungan Tampubolon. MIT licensed; see LICENSE.
 /**
  * DXF (AutoCAD R12 / AC1009) reader and writer, plus an SVG writer.
  *

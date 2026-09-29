@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Samuel Hasudungan Tampubolon. MIT licensed; see LICENSE.
 /**
  * The 3D viewport: renderer, cameras, lighting, grid, body management,
  * picking, transform gizmo, section clipping and measurement.

@@ -409,6 +409,46 @@ depend on them at all.
 
 ---
 
+## The 1.2.0 re-audit
+
+The same four questions asked again, eight days later, before the work was
+submitted for copyright registration. **Nothing needed changing.** That is the
+finding, and it is recorded rather than assumed, because the value of an audit
+trail is in the entries that say nothing was wrong as much as in the ones that
+say something was.
+
+What had actually changed between the two audits was a version number, the
+documents that quote artefact filenames, and a copyright notice added to the
+first line of every shipped file. No executable behaviour moved, which is itself
+checkable: the diff touches no function in `src/` and no line of
+`desktop/protocol.cjs` or `desktop/main.cjs` beyond that notice.
+
+### Re-verified, not assumed
+
+| | |
+|---|---|
+| **Path containment** | The symlink attacks still fail against `resolveSafely`, both sides realpath-resolved |
+| **Credentials in the tree** | Swept for API keys, tokens, private keys and AWS identifiers across every tracked file. The only matches are prose about the expression tokeniser and the traversal suite's own `secret.txt` fixture |
+| **Workflow token scope** | All three workflows declare `permissions:` explicitly; the widest is `contents: write` on the release job, which needs it |
+| **Third-party actions** | `softprops/action-gh-release` remains pinned to a commit. Every other action is GitHub's own, which the rule exempts deliberately: pinning `actions/checkout` to a SHA buys nothing against an owner who already controls the runner |
+| **No `pull_request_target`** | The trigger that runs a fork's code with the base repository's secrets is absent, and stays absent |
+| **Reproducible desktop build** | `desktop/package-lock.json` is committed and the workflow runs `npm ci`, not `npm install`, so a dependency cannot shift between a tested build and a released one |
+| **Content-Security-Policy** | The inline import map's hash still matches the policy |
+
+### One open maintenance item, stated rather than hidden
+
+`actions/checkout@v4`, `actions/setup-node@v4` and `actions/upload-artifact@v4`
+target Node 20, which GitHub has deprecated. Every run now prints a warning and
+GitHub forces them onto Node 24 instead. Nothing is broken and nothing is
+exposed: this is a build that will stop working at some future date, not a hole.
+
+It is deliberately **not** fixed here. Bumping three action majors buys no
+security today and can change checkout or cache behaviour, and this commit is
+the one the registration is cut from. It belongs in its own change, tested on
+its own.
+
+---
+
 ## Verifying the whole claim
 
 ```bash

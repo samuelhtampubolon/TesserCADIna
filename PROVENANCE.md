@@ -28,8 +28,8 @@ gives you legal advice has accurate facts to work from.
 
 | | |
 |---|---|
-| Application source | 25,337 lines across 54 modules (`src/`) |
-| Test and build tooling | 9,531 lines across 41 files (`tools/`, `desktop/`) |
+| Application source | 25,391 lines across 54 modules (`src/`) |
+| Test and build tooling | 9,595 lines across 41 files (`tools/`, `desktop/`) |
 | Third-party code included | three.js r169, vendored unmodified (`vendor/`) |
 | Runtime dependencies fetched at install | none |
 
@@ -37,16 +37,26 @@ gives you legal advice has accurate facts to work from.
 
 ## 2. Authorship, stated plainly
 
-**Samuel Tampubolon** directed the work, set its requirements, made its design
+**Samuel Hasudungan Tampubolon** directed the work, set its requirements, made its design
 decisions, and owns the repository.
 
 **The code was written with substantial assistance from an AI system**
 (Anthropic's Claude, via Claude Code). This is not incidental and it is not
 hidden: it is recorded in the git history itself. Commits carry
-`Co-Authored-By: Claude <noreply@anthropic.com>` trailers, and `git log` names
-Claude as an author alongside the repository owner. Anyone examining the
+`Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>` trailers, and `git log`
+names Claude as an author alongside the repository owner. Anyone examining the
 history will see it immediately, so it is stated here first rather than
 discovered later.
+
+Counted rather than described, at any point in the future:
+
+```bash
+git log --format='%an' main | sort | uniq -c        # commits by author
+git log --format='%B' main | grep -c 'Co-Authored-By: Claude'
+```
+
+No number is written here, because the commit that corrected it would change
+it. The commands are what stay true.
 
 ### Why this is flagged rather than glossed
 

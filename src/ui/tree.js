@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Samuel Hasudungan Tampubolon. MIT licensed; see LICENSE.
 /**
  * Left panel: the feature tree (Model / Simulate) and the layer list (Draft).
  *
