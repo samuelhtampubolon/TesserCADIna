@@ -76,6 +76,19 @@ dimensi mana pun — itulah yang membuat ini CAD, bukan program gambar 3D.
 Satuan internal selalu milimeter. Mata uang default studio: **Rp**. Proyeksi gambar
 kerja default: **sudut pertama (ISO/SNI)**. Kertas A4/A3.
 
+## Panduan pengguna
+
+**[Panduan Pengguna, Bahasa Indonesia, format Word](docs/Panduan-Pengguna-TesserCADIna.docx)**
+— tujuh belas bab: antarmuka, operator transform modal, ketiga ruang kerja,
+Studio, Analisis, gambar kerja, toleransi, referensi papan tuntas, tiga contoh
+terpandu, dan satu bab tentang apa yang bukan dirinya. Label antarmuka di dalamnya
+diambil dari kamus bahasa aplikasi, jadi apa yang tertulis di panduan sama dengan
+apa yang tertulis di layar.
+
+`docs/USER-GUIDE.md` adalah panduan yang sama dalam bahasa Inggris, diwarisi dari
+TesserCAD dan **belum diterjemahkan**. Ia masih berjudul "TesserCAD user guide" dan
+angka jumlah perintahnya sudah basi. Berkas Word di atas yang berlaku untuk edisi ini.
+
 ## Menjalankan secara lokal
 
 Tidak ada langkah build. Sajikan folder ini:
