@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Samuel Hasudungan Tampubolon. MIT licensed; see LICENSE.
 /**
  * What actually kills a large CAD file.
  *

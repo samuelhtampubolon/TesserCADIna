@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Samuel Hasudungan Tampubolon. MIT licensed; see LICENSE.
 /**
  * Cross-section properties, and what they say about strength.
  *

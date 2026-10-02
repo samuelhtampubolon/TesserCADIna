@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Samuel Hasudungan Tampubolon. MIT licensed; see LICENSE.
 /**
  * Records the viewport to a WebM video using the browser's own encoder —
  * MediaRecorder over canvas.captureStream(). No server, no ffmpeg.

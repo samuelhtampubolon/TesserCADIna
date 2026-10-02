@@ -76,6 +76,19 @@ dimensi mana pun — itulah yang membuat ini CAD, bukan program gambar 3D.
 Satuan internal selalu milimeter. Mata uang default studio: **Rp**. Proyeksi gambar
 kerja default: **sudut pertama (ISO/SNI)**. Kertas A4/A3.
 
+## Panduan pengguna
+
+**[Panduan Pengguna, Bahasa Indonesia, format Word](docs/Panduan-Pengguna-TesserCADIna.docx)**
+— tujuh belas bab: antarmuka, operator transform modal, ketiga ruang kerja,
+Studio, Analisis, gambar kerja, toleransi, referensi papan tuntas, tiga contoh
+terpandu, dan satu bab tentang apa yang bukan dirinya. Label antarmuka di dalamnya
+diambil dari kamus bahasa aplikasi, jadi apa yang tertulis di panduan sama dengan
+apa yang tertulis di layar.
+
+`docs/USER-GUIDE.md` adalah panduan yang sama dalam bahasa Inggris, diwarisi dari
+TesserCAD dan **belum diterjemahkan**. Ia masih berjudul "TesserCAD user guide" dan
+angka jumlah perintahnya sudah basi. Berkas Word di atas yang berlaku untuk edisi ini.
+
 ## Menjalankan secara lokal
 
 Tidak ada langkah build. Sajikan folder ini:
@@ -96,7 +109,7 @@ npm install
 npm run dist
 ```
 
-Artefak: `TesserCADIna-1.1.0-windows-x64.zip` dan installer NSIS per-pengguna.
+Artefak: `TesserCADIna-1.2.0-windows-x64.zip` dan installer NSIS per-pengguna.
 Locale Chromium selain Inggris dan Indonesia dibuang, yang menghemat belasan MB.
 
 Ukuran itu diperiksa setiap build: langkah **The Windows download is the size the
@@ -130,7 +143,7 @@ repositori, bukan efek samping sebuah build.
    tidak cocok, karena nama setiap berkas diambil dari manifes, bukan dari tag.
 
    Lewat peramban, tanpa baris perintah: **Releases → Draft a new release →
-   Choose a tag →** ketik `v1.1.0` **→ Create new tag: v1.1.0 on publish →**
+   Choose a tag →** ketik `v1.2.0` **→ Create new tag: v1.2.0 on publish →**
    Target: `main` **→ Publish release**. Build berjalan sekitar tiga menit, lalu
    berkasnya menempel sendiri ke rilis itu.
 
@@ -149,8 +162,8 @@ repositori, bukan efek samping sebuah build.
 **Belum menandai, tapi butuh `.exe`-nya sekarang?** Setiap build menyimpan
 artefaknya di tab **Actions**: buka run **Desktop build** yang hijau, gulir ke
 **Artifacts**, ambil `tessercadina-windows`. Isinya sama persis dengan yang akan
-dilampirkan ke rilis (`TesserCADIna-1.1.0-setup.exe`,
-`TesserCADIna-1.1.0-windows-x64.zip`, dan `.sha256` masing-masing). Bedanya:
+dilampirkan ke rilis (`TesserCADIna-1.2.0-setup.exe`,
+`TesserCADIna-1.2.0-windows-x64.zip`, dan `.sha256` masing-masing). Bedanya:
 artefak Actions hanya bisa diunduh sambil masuk ke akun GitHub, terbungkus satu
 lapis zip tambahan, dan dihapus otomatis setelah 90 hari. Rilis tidak.
 
@@ -161,4 +174,4 @@ lapis zip tambahan, dan dihapus otomatis setelah 90 hari. Rilis tidak.
 ## Lisensi
 
 MIT. Lihat [LICENSE](LICENSE), [NOTICE](NOTICE), dan [ATTRIBUTION.md](ATTRIBUTION.md).
-Mesin dan arsitektur berasal dari TesserCAD, MIT, © Samuel Tampubolon.
+Mesin dan arsitektur berasal dari TesserCAD, MIT, © Samuel Hasudungan Tampubolon.

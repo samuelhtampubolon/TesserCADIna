@@ -273,6 +273,47 @@ ok('and ends on the MIT warranty clause, with nothing appended', endsClean,
 ok('and the bundled-component notice exists, so nothing was lost in moving it',
   existsSync(join(root, 'NOTICE')) && /three\.js/.test(readFileSync(join(root, 'NOTICE'), 'utf8')));
 
+/* ---------------------------------------- the notice on the work itself */
+
+// Every file that ships as part of the program carries the copyright notice in
+// its first line, and the name in it is the one on the LICENSE.
+//
+// The reason is the filing rather than the repository: the work is submitted as
+// its source, page after page, and a notice that lives only in LICENSE is a
+// notice that is absent from every page but one. It also travels with a file
+// that is copied out on its own, which a root LICENSE does not.
+//
+// vendor/ is deliberately outside this: three.js is kept byte-for-byte as
+// published, which ATTRIBUTION.md states and which a notice of ours would
+// break. tools/ is outside it too - it is how the work is tested and built,
+// not the work being registered.
+//
+// The name is read from LICENSE rather than written here, so the two cannot
+// drift: renaming the holder in one place fails this until both agree.
+const holder = /^MIT License\s+Copyright \(c\) (\d{4}) (.+?)\s*$/m
+  .exec(licence.replace(/\r/g, ''));
+ok('LICENSE names a copyright year and holder this suite can read',
+  !!holder, holder ? `${holder[1]} ${holder[2]}` : 'could not parse the opening lines');
+
+if (holder) {
+  const expected = `Copyright (c) ${holder[1]} ${holder[2]}.`;
+  const shipped = [
+    ...walkFiles('src', ['.js']),
+    ...walkFiles('styles', ['.css']),
+    ...walkFiles('desktop', ['.cjs']),
+    'sw.js',
+    'index.html',
+  ];
+  const missing = [];
+  for (const rel of shipped) {
+    const head = readFileSync(join(root, rel), 'utf8').split('\n').slice(0, 2).join('\n');
+    if (!head.includes(expected)) missing.push(rel);
+  }
+  ok(`every shipped source file opens with the notice naming ${holder[2]}`,
+    missing.length === 0,
+    missing.length ? `${missing.length} without it: ${missing.slice(0, 6).join(', ')}` : `${shipped.length} files`);
+}
+
 /* ------------------------------------------------ the size of the thing */
 
 // PROVENANCE and COMPARISON both state how large this codebase is, and they
@@ -286,6 +327,17 @@ ok('and the bundled-component notice exists, so nothing was lost in moving it',
 //
 //   find src -name '*.js' | wc -l        # modules
 //   cat $(find src -name '*.js') | wc -l # lines
+/** Every file under `dir` with one of `exts`, as paths relative to the root. */
+function walkFiles(dir, exts, out = []) {
+  for (const entry of readdirSync(join(root, dir), { withFileTypes: true })) {
+    if (entry.name === 'node_modules') continue;
+    const rel = `${dir}/${entry.name}`;
+    if (entry.isDirectory()) walkFiles(rel, exts, out);
+    else if (exts.some(e => entry.name.endsWith(e))) out.push(rel);
+  }
+  return out;
+}
+
 function countTree(dir, exts) {
   let files = 0, lines = 0;
   const walk = (d) => {

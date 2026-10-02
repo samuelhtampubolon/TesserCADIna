@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Samuel Hasudungan Tampubolon. MIT licensed; see LICENSE.
 /**
  * Geometry construction: parametric primitives, 2D profile extraction from the
  * drafting workspace, and the extrude / revolve / pattern / mirror operators.

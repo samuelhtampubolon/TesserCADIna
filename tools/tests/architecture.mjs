@@ -227,9 +227,19 @@ console.log(`     largest modules: ${sizes.slice(0, 4).map(s => `${s.file} ${s.l
 
 /* ------------------------------- 8. every module explains what it is for */
 
+// A single-line copyright notice is allowed to sit above the block comment, and
+// only that. Every shipped file carries one on its first line so the notice
+// survives being printed or copied out on its own, which is what a registration
+// submits; the documentation suite is what requires it to be there. Skipping one
+// leading `//` line keeps this check about what it was always about - that a
+// reader opening any module finds a paragraph telling them what it is for -
+// without letting a module replace that paragraph with a comment of any kind.
 const undocumented = files.filter((f) => {
-  const head = readFileSync(f, 'utf8').slice(0, 400).trimStart();
-  return !head.startsWith('/**');
+  const text = readFileSync(f, 'utf8');
+  const body = text.startsWith('// Copyright (c) ')
+    ? text.slice(text.indexOf('\n') + 1)
+    : text;
+  return !body.slice(0, 400).trimStart().startsWith('/**');
 });
 ok('every module opens with a block comment saying what it is for',
   undocumented.length === 0, undocumented.map(f => relative(srcRoot, f)).join(', '));

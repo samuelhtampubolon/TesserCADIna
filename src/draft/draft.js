@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Samuel Hasudungan Tampubolon. MIT licensed; see LICENSE.
 /**
  * The Draft workspace — a 2D drafting board in the AutoCAD idiom.
  *
