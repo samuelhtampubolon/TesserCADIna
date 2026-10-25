@@ -1,6 +1,6 @@
 # TesserCADIna
 
-**Studio CAD parametrik berbahasa Indonesia yang berjalan sepenuhnya di peramban.**
+**Alat belajar Studio CAD parametrik berbahasa Indonesia yang mampu berjalan sepenuhnya di Web Browser.**
 Pemodelan solid 3D, drafting 2D, dan simulasi 4D (tiga dimensi plus waktu).
 Satuan metrik, gambar kerja sudut pertama ISO/SNI. Unduhan desktopnya lebih
 ringan dari TesserCAD; salinan webnya membawa kamusnya sendiri, jadi sedikit
