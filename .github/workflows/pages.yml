@@ -1,7 +1,10 @@
 # Publishes TesserCADIna to GitHub Pages.
 #
 # There is no build step: the app is plain ES modules and the three.js runtime
-# is vendored into vendor/, so the repository is uploaded as-is.
+# is vendored into vendor/. What is uploaded is dist-site/, assembled by
+# tools/build-site.mjs: the files a browser loads and nothing beside them, so
+# the test tooling, the desktop shell and the documents are not published as
+# part of the site. Every other host serves the same directory.
 name: Deploy TesserCADIna to GitHub Pages
 
 on:
@@ -43,9 +46,14 @@ jobs:
       # Source: GitHub Actions). `enablement: true` cannot do it for you:
       # creating a Pages site needs repository-admin rights, which a workflow's
       # GITHUB_TOKEN never carries.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Assemble the site
+        run: node tools/build-site.mjs
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: dist-site
       - id: deployment
         uses: actions/deploy-pages@v5

@@ -1,0 +1,13 @@
+# Cloudflare Pages.
+#
+# Connected to the repository: set the build command to
+#   node tools/build-site.mjs
+# and the output directory to dist-site in the Pages dashboard.
+# Deployed by hand instead:
+#   node tools/build-site.mjs && npx wrangler pages deploy
+#
+# Security headers come from dist-site/_headers, which Cloudflare Pages reads
+# from the published directory, as Netlify does.
+name = "tessercadina"
+pages_build_output_dir = "dist-site"
+compatibility_date = "2026-10-01"

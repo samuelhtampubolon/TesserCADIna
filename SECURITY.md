@@ -449,10 +449,75 @@ its own.
 
 ---
 
+## The 1.2.1 audit
+
+Requested as a check for PHP, SQL and Node.js weaknesses, alongside making the
+site deployable to more hosts. Two findings needed a change, and one was a
+fault in the previous release.
+
+### The desktop runtime carried four Electron advisories
+
+`desktop/package-lock.json` pinned Electron **44.3.0**. `npm audit` reported
+four advisories against it, the highest of them high severity (GHSA-jr5w-w6x2-84p9,
+fixed in 44.9.1), with the rest moderate and low. Electron is the one dependency
+that ships inside the `.exe`, so this is the dependency that matters. The real
+exposure is small, because the shell resolves every hostname to nothing and so
+never opens a TLS connection for a compromised certificate to matter on, but a
+runtime with a known advisory should not be shipped knowingly.
+
+Electron is now **44.9.3**, inside the declared `^44` range so nothing major
+moved, and the declared floor is raised to `^44.9.3` so a fresh install cannot
+resolve below the fix. The build tooling's transitive advisories (undici,
+http-cache-semantics, fast-uri, brace-expansion) were cleared by the same
+non-breaking `npm audit fix`. `npm audit` reports **0 vulnerabilities** in both
+`package.json` trees. The real shell was then run under Xvfb against
+`tools/verify-desktop.cjs` on the new Electron, and every runtime check passed.
+
+### The service worker shipped 1.2.0 with a stale version
+
+`sw.js` is generated, and its `VERSION` is a hash of the files it caches. The
+copyright notice added in 1.2.0 changed every one of those files, but `sw.js`
+was not regenerated, so 1.2.0 shipped under a cache key computed from older files. An installed
+offline copy was therefore never told that a release had replaced it. The files
+still refreshed in the background, so nothing broke, but the guarantee that a
+release replaces the cache wholesale did not hold.
+
+Regenerating it would also have deleted the copyright notice, because the
+generator did not write one. It now reads the notice from LICENSE, and
+`npm test` runs `build-sw.mjs --check`, which fails whenever a shipped file
+has changed and the worker was not regenerated.
+
+### PHP, SQL and Node.js
+
+| Checked | Finding |
+|---|---|
+| PHP | No PHP anywhere in the repository. There is no server-side code of any kind. |
+| SQL injection | No SQL, no database driver and no query construction. The document is JSON in browser storage, so there is no query surface to inject into. |
+| Code execution in Node.js and the renderer | No `eval`, no `new Function` and no `child_process` in `src/` or `desktop/`. The expression engine is a hand-written parser that can only ever produce a number. |
+| Node.js dependencies | Root: 0 vulnerabilities, with one development dependency (`playwright-core`) and nothing at runtime. Desktop: 0, after the Electron update above. |
+| Insecure links | The only `http://` outside `vendor/` is in csg.js's MIT copyright line, quoted in ATTRIBUTION.md, which the licence requires to be kept verbatim. The two inside `vendor/` are comments in three.js files kept byte-for-byte. None of them is loaded or linked by the application. |
+
+### Hosting, and the one policy every host serves
+
+The site can now be deployed to Vercel, Netlify, Cloudflare Pages, Firebase
+Hosting and Hugging Face Spaces as well as GitHub Pages. Each of those is a
+place a header could be weaker than the others, so there is one source,
+`tools/build-site.mjs`, which reads the Content-Security-Policy from
+`index.html` and adds `frame-ancestors 'none'`, `X-Content-Type-Options`,
+`Referrer-Policy`, `Permissions-Policy`, `X-Frame-Options` and
+`Cross-Origin-Opener-Policy`. The security suite checks every host's
+configuration against it, and was shown to fail when one header was weakened.
+
+GitHub Pages now publishes `dist-site/` rather than the repository root, so
+the test tooling, the desktop shell and the documents are no longer served as
+part of the site.
+
+---
+
 ## Verifying the whole claim
 
 ```bash
-npm test                          # 944 checks, 17 suites, ~4 seconds
+npm test                          # 952 checks, 17 suites, ~4 seconds
 node tools/tests/security.mjs     # the attacks, on their own
 node tools/tests/desktop.mjs      # the desktop surface
 node tools/check-csp.mjs          # the policy's hash is current

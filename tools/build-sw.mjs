@@ -45,7 +45,15 @@ const h = createHash('sha256');
 for (const f of files) h.update(f).update(readFileSync(join(root, f)));
 const version = h.digest('hex').slice(0, 12);
 
-const body = `/**
+// The copyright notice every shipped file opens with, read from LICENSE so the
+// generator cannot drift from it. Writing the body without it is how this file
+// lost its notice the first time it was regenerated after the notice was added.
+const holder = /Copyright \(c\) (\d{4}) (.+)/.exec(readFileSync(join(root, 'LICENSE'), 'utf8'));
+const notice = holder
+  ? `// Copyright (c) ${holder[1]} ${holder[2].trim()}. MIT licensed; see LICENSE.\n`
+  : '';
+
+const body = `${notice}/**
  * Offline install.
  *
  * "More and more professional 3D software is now only available on
@@ -125,5 +133,18 @@ self.addEventListener('message', (e) => {
 });
 `;
 
+// `--check` compares instead of writing, so the test run fails when a shipped
+// file changed and the worker was not regenerated. Without it the committed
+// VERSION silently stops matching the files it names, and an installed offline
+// copy is never told that a release replaced it: that is how 1.2.0 shipped.
+if (process.argv.includes('--check')) {
+  const current = readFileSync(join(root, 'sw.js'), 'utf8');
+  if (current !== body) {
+    console.error('build-sw: sw.js is stale. Run `npm run sw` and commit the result.');
+    process.exit(1);
+  }
+  console.log(`build-sw: ok, sw.js is current (${files.length} files, version ${version}).`);
+  process.exit(0);
+}
 writeFileSync(join(root, 'sw.js'), body);
 console.log(`sw.js: ${files.length} files, version ${version}`);
