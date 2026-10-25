@@ -70,7 +70,6 @@ const EXEMPT = new Map([
   ['Boolean skipped: ${…}k triangles exceeds the ${…}k budget.',
     'raised inside the boolean kernel, which the workers load and the dictionary is deliberately kept out of; rebuild.js phrases it (see readableError)'],
   ['Jelajahi templat', 'already Indonesian at the source'],
-  ['Pintasan', 'already Indonesian at the source'],
   ['Mulai memodel', 'already Indonesian at the source'],
 ]);
 
@@ -366,6 +365,22 @@ ok('and each one describes itself in Indonesian',
 const indexHtml = readFileSync(join(root, 'index.html'), 'utf8');
 ok('the page declares Indonesian to the browser and to a screen reader',
   /<html[^>]*\blang=["']id["']/.test(indexHtml));
+
+// Landmark names in the static page never pass through t(), so a screen
+// reader announcing "Main menu" on an Indonesian page was only caught by eye.
+const landmarkNames = [...indexHtml.matchAll(/aria-label="([^"]+)"/g)].map(m => m[1]);
+const englishLandmarks = landmarkNames.filter(n => Object.prototype.hasOwnProperty.call(ID, n) && ID[n] !== n);
+ok('the static page names its landmarks in Indonesian', englishLandmarks.length === 0, englishLandmarks.join(', '));
+
+/* ---------------------------------------------- labels carrying a shortcut */
+
+// Tooltips put the keystroke after two or more spaces. The label in front is
+// a dictionary key like any other, and the keystroke is not language.
+ok('a label followed by its shortcut is translated, keystroke kept',
+  t('Save project  (Ctrl S)') === `${ID['Save project']}  (Ctrl S)` && t('Command palette  (Ctrl K)') === `${ID['Command palette']}  (Ctrl K)`);
+ok('and the rule leaves a string it cannot split alone',
+  t('Not a key  at all') === 'Not a key  at all' && t('Save project') === ID['Save project']);
+ok('translating twice changes nothing', t(t('Save project  (Ctrl S)')) === t('Save project  (Ctrl S)'));
 
 console.log(fails ? `\n${fails} FAILURES` : '\nALL BAHASA INDONESIA CHECKS PASS');
 process.exit(fails ? 1 : 0);

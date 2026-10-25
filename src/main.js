@@ -2953,26 +2953,30 @@ class App {
   }
 
   showWelcome() {
+    // Three choices and three keys. Everything else this dialog used to say is
+    // one click away under Bantuan, where it is read when it is wanted rather
+    // than stacked in front of the first thing a new user sees.
+    const go = (ws) => { closeModal(); this.setWorkspace(ws); };
     modal({
       title: tfmt('Selamat datang di {APP_NAME}', { APP_NAME }), icon: 'bulb', wide: true,
-      subtitle: 'Studio CAD parametrik yang berjalan sepenuhnya di peramban. Tidak ada yang diunggah.',
+      subtitle: 'Pilih tempat mulai. Semua berjalan di peramban; tidak ada yang diunggah.',
       body: [
-        el('div', { class: 'card-grid' }, [
-          ['cube3d', 'Model', 'Solid parametrik, boolean, pattern, dan mirror dalam pohon fitur yang bisa dibangun ulang.'],
-          ['sketch', 'Draft', 'Drafting 2D dengan snap, layer, dan dimensi. Profil tertutup bisa di-extrude atau di-revolve.'],
-          ['timeline', 'Simulasi', 'Dimensi keempat: keyframe, urutan bangun, dan fisika rigid-body.'],
-        ].map(([ic, t, b]) => el('div', { class: 'card', style: { cursor: 'default' } }, [
+        el('div', { class: 'card-grid welcome-cards' }, [
+          ['model', 'cube3d', 'Model', 'Solid parametrik 3D'],
+          ['draft', 'sketch', 'Draft', 'Gambar 2D dan dimensi'],
+          ['sim', 'timeline', 'Simulasi', 'Animasi dan fisika'],
+        ].map(([ws, ic, t, b]) => el('button', { class: 'card', onclick: () => go(ws) }, [
           icon(ic, { size: 22 }), el('b', { text: t }), el('span', { text: b }),
         ]))),
-        el('h3', { text: 'Tiga hal yang perlu diketahui' }),
-        el('p', { html: '<b>Ketik ekspresi, bukan angka.</b> Setiap field menerima <code>width*2</code> dan dibangun ulang saat <code>width</code> berubah.<br><b>Tekan G, R, atau S.</b> Pilihan mengikuti pointer; X/Y/Z mengunci sumbu, atau ketik nilai tepat.<br><b>Tekan Ctrl K.</b> Semua perintah ada di satu pencarian.' }),
-        el('h3', { text: 'Batas yang jujur' }),
-        el('p', { html: 'Ini pemodel mesh, bukan kernel B-rep: tidak ada fillet sejati pada tepi sembarang, dan tidak ada ekspor STEP. Dinamika memakai tabrakan bounding-sphere — cocok untuk uji jatuh dan urutan bangun, bukan analisis tegangan.' }),
+        el('ul', { class: 'welcome-keys' }, [
+          ['Ctrl K', 'cari perintah'],
+          ['G R S', 'pindah, putar, skala'],
+          ['F1', 'bantuan dan pintasan'],
+        ].map(([k, d]) => el('li', {}, [...k.split(' ').map(x => el('kbd', { text: x })), el('span', { text: d })]))),
       ],
       actions: [
         { label: 'Jelajahi templat', run: () => setTimeout(() => this.showTemplates(), 60) },
-        { label: 'Pintasan', run: () => setTimeout(() => this.showShortcuts(), 60) },
-        { label: 'Mulai memodel', primary: true },
+        { label: 'Mulai memodel', primary: true, run: () => { this.setWorkspace('model'); } },
       ],
     });
   }
@@ -2989,6 +2993,8 @@ class App {
           ['Format proyek', `${FILE_EXT} — JSON polos`],
           ['Lisensi', 'MIT'],
         ]),
+        el('h3', { text: 'Batas yang jujur' }),
+        el('p', { html: 'Ini pemodel mesh, bukan kernel B-rep: tidak ada fillet sejati pada tepi sembarang, dan tidak ada ekspor STEP. Dinamika memakai tabrakan bounding-sphere, cocok untuk uji jatuh dan urutan bangun, bukan analisis tegangan.' }),
         el('p', { class: 'hint', html: 'Dibangun sebagai situs statis. <a href="https://github.com/samuelhtampubolon/TesserCADIna" target="_blank" rel="noopener">Sumber di GitHub</a>.' }),
       ],
       actions: [{ label: 'Close', primary: true }],

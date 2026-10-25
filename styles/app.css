@@ -31,11 +31,16 @@
   /* text */
   --txt:           #e8eef6;
   --txt-2:         #97a5b8;
-  --txt-3:         #65738a;
+  --txt-3:         #8290a4;   /* 4.5:1 or better on every panel surface */
 
   /* accent + semantics */
   --accent:        #4c9fff;
   --accent-2:      #2f7fe0;
+  /* A filled accent surface carrying white text. The line accent above is
+     too light for that in the dark theme (2.7:1), so fills use their own. */
+  --accent-fill:   #2a74d4;
+  --accent-fill-2: #1f63bb;
+  --on-accent:     #ffffff;
   --accent-soft:   rgba(76,159,255,.15);
   --accent-line:   rgba(76,159,255,.42);
   --ok:            #46cf8b;
@@ -84,9 +89,11 @@
   --line-strong:   #b9c2cf;
   --txt:           #131a24;
   --txt-2:         #526073;
-  --txt-3:         #7d8b9e;
+  --txt-3:         #5f6d80;
   --accent:        #1668dc;
   --accent-2:      #0f52b5;
+  --accent-fill:   #1668dc;
+  --accent-fill-2: #0f52b5;
   --accent-soft:   rgba(22,104,220,.10);
   --accent-line:   rgba(22,104,220,.34);
   --ok:            #0f7f46;
@@ -146,6 +153,11 @@ svg { flex: none; }
 .boot-mark { width: 60px; height: 60px; color: var(--accent); animation: spin 2.4s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .boot-mark { animation: none; } }
+/* Anyone who has asked the system for less motion gets it everywhere, not
+   only on the two animations that were written with it in mind. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+}
 .boot-name { margin-top: 16px; font-size: 19px; font-weight: 640; letter-spacing: .06em; }
 .boot-sub { margin-top: 5px; font-size: 12px; color: var(--txt-2); }
 .boot-bar { width: 180px; height: 2px; margin: 16px auto 0; background: var(--line); border-radius: 2px; overflow: hidden; }
@@ -191,8 +203,8 @@ svg { flex: none; }
   transition: background .12s var(--ease), color .12s var(--ease);
 }
 .ws:hover { color: var(--txt); }
-.ws[aria-selected="true"] { background: var(--accent); color: #fff; box-shadow: var(--shadow-1); }
-.ws[aria-selected="true"] svg { color: #fff; }
+.ws[aria-selected="true"] { background: var(--accent-fill); color: var(--on-accent); box-shadow: var(--shadow-1); }
+.ws[aria-selected="true"] svg { color: var(--on-accent); }
 @media (max-width: 899px) { .ws .ws-label { display: none; } .ws { padding: 4px 11px; } }
 
 .doc-chip {
@@ -296,7 +308,7 @@ svg { flex: none; }
 }
 .tool:hover:not(:disabled) { background: var(--bg-hover); color: var(--txt); }
 .tool:active:not(:disabled) { background: var(--bg-4); }
-.tool.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.tool.active { background: var(--accent-fill); border-color: var(--accent-fill); color: var(--on-accent); }
 .tool.toggled { background: var(--accent-soft); border-color: var(--accent-line); color: var(--accent); }
 .tool:disabled { opacity: .3; cursor: default; }
 .tool .tx { font-size: 10.5px; line-height: 1.1; letter-spacing: .005em; }
@@ -360,6 +372,7 @@ svg { flex: none; }
 .mini-btn {
   background: none; border: 0; color: var(--txt-3); cursor: pointer;
   padding: 3px; border-radius: var(--r-sm); display: grid; place-items: center;
+  min-width: 24px; min-height: 24px;   /* WCAG 2.2 target size, 2.5.8 */
 }
 .mini-btn:hover { background: var(--bg-hover); color: var(--txt); }
 .mini-btn.on { color: var(--accent); }
@@ -472,8 +485,9 @@ svg { flex: none; }
 }
 .tree-node:hover { background: var(--bg-hover); }
 .tree-node.selected { background: var(--accent-soft); border-color: var(--accent-line); }
-.tree-node.consumed { opacity: .5; }
-.tree-node.suppressed .tn-name { text-decoration: line-through; opacity: .55; }
+.tree-node.consumed .tn-name, .tree-node.consumed .pill { color: var(--txt-3); }
+.tree-node.consumed .tn-swatch, .tree-node.consumed .tn-glyph { opacity: .55; }
+.tree-node.suppressed .tn-name { text-decoration: line-through; color: var(--txt-3); }
 .tree-node.errored { border-color: var(--err); background: color-mix(in srgb, var(--err) 8%, transparent); }
 .tree-node.drag-over { box-shadow: inset 0 2px 0 var(--accent); }
 .tn-glyph { width: 17px; display: grid; place-items: center; color: var(--txt-3); flex: none; }
@@ -484,7 +498,9 @@ svg { flex: none; }
 .tn-eye { opacity: .4; flex: none; }
 .tree-node:hover .tn-eye { opacity: .85; }
 .tn-eye:hover { opacity: 1; }
-.tree-node.hidden-body .tn-name { opacity: .45; }
+/* A dimmed row stays readable (4.5:1) and says why it is dimmed with a cue
+   that is not colour alone: italic for hidden, a strike for suppressed. */
+.tree-node.hidden-body .tn-name { color: var(--txt-3); font-style: italic; }
 .tn-badges { display: flex; gap: 3px; flex: none; }
 
 .empty-note { color: var(--txt-3); padding: 22px 14px; text-align: center; line-height: 1.7; display: flex; flex-direction: column; align-items: center; gap: 3px; }
@@ -565,9 +581,10 @@ input.scrub::selection { background: var(--accent-soft); }
   flex: 1; display: flex; align-items: center; justify-content: center; gap: 5px;
   background: none; border: 0; border-radius: 3px; padding: 3px 7px;
   color: var(--txt-2); cursor: pointer; font-size: 11.5px; min-width: 0; white-space: nowrap;
+  min-height: 24px;
 }
 .segmented button:hover { color: var(--txt); background: var(--bg-hover); }
-.segmented button.on { background: var(--accent); color: #fff; }
+.segmented button.on { background: var(--accent-fill); color: var(--on-accent); }
 
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
@@ -578,8 +595,8 @@ input.scrub::selection { background: var(--accent-soft); }
 .btn:hover:not(:disabled) { background: var(--bg-4); border-color: var(--line-strong); }
 .btn:active:not(:disabled) { transform: translateY(.5px); }
 .btn:disabled { opacity: .4; cursor: default; }
-.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
-.btn.primary:hover:not(:disabled) { background: var(--accent-2); border-color: var(--accent-2); }
+.btn.primary { background: var(--accent-fill); border-color: var(--accent-fill); color: var(--on-accent); }
+.btn.primary:hover:not(:disabled) { background: var(--accent-fill-2); border-color: var(--accent-fill-2); }
 .btn.danger:hover:not(:disabled) { border-color: var(--err); color: var(--err); background: color-mix(in srgb, var(--err) 10%, transparent); }
 .btn.ghost { background: none; border-color: transparent; }
 .btn.ghost:hover:not(:disabled) { background: var(--bg-hover); }
@@ -628,7 +645,7 @@ input.scrub::selection { background: var(--accent-soft); }
   border-radius: var(--r-sm); color: var(--txt-2); cursor: pointer; display: grid; place-items: center;
 }
 .tl-transport button:hover { background: var(--bg-hover); color: var(--txt); }
-.tl-transport button.on { background: var(--accent); color: #fff; }
+.tl-transport button.on { background: var(--accent-fill); color: var(--on-accent); }
 .tl-time { font: 12px var(--mono); color: var(--txt); background: var(--bg-inset); padding: 3px 9px; border-radius: var(--r-sm); border: 1px solid var(--line); font-variant-numeric: tabular-nums; min-width: 74px; text-align: center; }
 .tl-field { display: flex; align-items: center; gap: 5px; color: var(--txt-2); font-size: 12px; }
 .tl-field input, .tl-field select { width: 62px; padding: 2px 6px; height: 24px; }
@@ -716,6 +733,15 @@ kbd { font: 11px var(--mono); background: var(--bg-inset); border: 1px solid var
 .card b { font-size: 12.5px; font-weight: 620; }
 .card span { font-size: 11.5px; color: var(--txt-2); line-height: 1.5; }
 .card.on { border-color: var(--accent); background: var(--accent-soft); box-shadow: inset 0 0 0 1px var(--accent); }
+.card:focus-visible { outline-offset: 2px; border-radius: var(--r-lg); }
+
+.welcome-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.welcome-cards .card { align-items: center; text-align: center; padding: 18px 12px; gap: 7px; }
+.welcome-keys { list-style: none; margin: 14px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px 22px; justify-content: center; color: var(--txt-2); font-size: 12.5px; }
+.welcome-keys li { display: flex; align-items: center; gap: 4px; }
+.welcome-keys span { margin-left: 4px; }
+/* Keystrokes mean nothing without a keyboard. */
+@media (pointer: coarse) and (hover: none) { .welcome-keys { display: none; } }
 
 /* ============================================================
    Studio: the Design Doctor, the cost estimate and the why-tutor
@@ -753,7 +779,7 @@ kbd { font: 11px var(--mono); background: var(--bg-inset); border: 1px solid var
    the 40px minimum like every other control: the status bar grows to suit
    rather than the badge staying a 21px target nobody can hit. */
 .sb-btn { background: none; border: 0; cursor: pointer; font: inherit; display: flex; align-items: center; gap: 5px; border-radius: var(--r-sm); padding: 2px 6px; }
-@media (pointer: coarse) { .sb-btn { min-height: 40px; padding: 2px 10px; } }
+@media (pointer: coarse) { .sb-btn { min-height: 44px; padding: 2px 10px; } }
 .sb-btn:hover { background: var(--bg-hover); }
 .sb-item.dx-err { color: var(--err); }
 .sb-item.dx-warn { color: var(--warn); }
@@ -920,12 +946,12 @@ kbd { font: 11px var(--mono); background: var(--bg-inset); border: 1px solid var
 @media (pointer: coarse) {
   .tool { min-height: 48px; min-width: 54px; padding: 7px 8px; }
   .tool.compact { min-height: 44px; }
-  .mini-btn { min-width: 36px; min-height: 36px; }
-  .icon-btn { width: 40px; height: 40px; }
+  .mini-btn { min-width: 44px; min-height: 44px; }
+  .icon-btn { width: 44px; height: 44px; }
   .menu-item { min-height: 44px; padding: 8px 10px; }
   .tree-node { min-height: 44px; padding: 7px 8px; }
   .layer-row { min-height: 44px; padding: 6px 7px; }
-  .btn { min-height: 40px; padding: 8px 13px; }
+  .btn { min-height: 44px; padding: 8px 13px; }
   .btn.sm { min-height: 36px; }
   .segmented button { min-height: 36px; }
   input[type="checkbox"] { width: 20px; height: 20px; }
@@ -1003,6 +1029,11 @@ kbd { font: 11px var(--mono); background: var(--bg-inset); border: 1px solid var
   .doc-chip { display: flex; flex: 1; min-width: 0; margin-left: 4px; background: none; border: 0; padding: 0; }
   .doc-chip > svg { display: none; }
   #docName { width: 100%; text-align: left; font-size: 16px; color: var(--txt); padding: 6px; height: 42px; }
+  /* Theme and help are both in the Lainnya sheet. Repeating them here cost
+     the document name its room once the buttons grew to a 44 px target. */
+  #topActions [data-cmd="view.theme"],
+  #topActions [data-cmd="help.shortcuts"],
+  #topActions .top-sep:last-of-type { display: none; }
 
   #ribbon {
     min-height: 60px;
@@ -1123,7 +1154,7 @@ kbd { font: 11px var(--mono); background: var(--bg-inset); border: 1px solid var
     min-height: 36px; background: none; border: 0; border-radius: var(--r-sm);
     color: var(--txt-2); cursor: pointer; font-size: 13px;
   }
-  .sheet-tabs button.on { background: var(--accent); color: #fff; }
+  .sheet-tabs button.on { background: var(--accent-fill); color: var(--on-accent); }
 
   /* ---- the “More” sheet: every menu, as an accordion ---- */
   .menu-sheet { padding: 10px 12px 24px; display: flex; flex-direction: column; gap: 8px; }
@@ -1198,6 +1229,8 @@ kbd { font: 11px var(--mono); background: var(--bg-inset); border: 1px solid var
   .modal-foot { position: sticky; bottom: 0; background: var(--bg-2); }
   .modal-foot .btn { flex: 1; }
   .card-grid { grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); }
+  .welcome-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
+  .welcome-cards .card { padding: 14px 6px; }
   .kbd-grid { grid-template-columns: 1fr; }
 
   #paletteRoot { padding-top: 0; align-items: stretch; }
@@ -1286,14 +1319,23 @@ kbd { font: 11px var(--mono); background: var(--bg-inset); border: 1px solid var
 
 /* Eleven menu buttons, three workspace tabs, the document chip and eight top
    actions do not all fit below the desktop breakpoint: on an iPad in landscape
-   the actions at the right end were being pushed off the edge. Below 1280px the
-   menu bar collapses to a single button holding the same eleven menus. */
-@media (max-width: 1279px) {
+   the actions at the right end were being pushed off the edge. Below 1440px the
+   menu bar collapses to a single button holding the same menus. It used to be
+   1280px, and measured on a 1366px laptop the full bar left the workspace tabs
+   67px and the document name 14px: present, and unusable. */
+@media (max-width: 1439px) {
   .menubar > button { display: none; }
   .menubar > button.menu-compact { display: flex; }
 }
-@media (min-width: 1280px) {
+@media (min-width: 1440px) {
   .menubar > button.menu-compact { display: none; }
+  /* With the full bar showing, the tabs keep their size and the wordmark is
+     what yields until there is room for it as well. */
+  .workspaces { flex: none; }
+}
+@media (min-width: 1440px) and (max-width: 1679px) {
+  .brand-name { display: none; }
+  .menubar > button { padding: 5px 6px; }
 }
 
 .menubar > button.menu-compact {

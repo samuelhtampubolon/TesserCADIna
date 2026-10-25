@@ -262,6 +262,23 @@ for (const [name, w, h] of SIZES) {
   await ctx.close();
 }
 
+/* ------------------------------------- the laptop widths in between */
+// 1366 and 1440 are the commonest laptop screens. The full menu bar used to
+// squeeze the workspace tabs and the document name there until neither could
+// be read, while nothing was technically off screen.
+for (const w of [1280, 1366, 1440, 1536, 1600]) {
+  const { ctx, page } = await open(w, 860, { touch: false, ua: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36' });
+  const m = await page.evaluate(() => {
+    const ws = document.getElementById('workspaces');
+    const name = document.getElementById('docName');
+    const shown = getComputedStyle(document.querySelector('.doc-chip')).display !== 'none';
+    return { wsClipped: ws.scrollWidth > ws.clientWidth + 1, name: shown ? Math.round(name.getBoundingClientRect().width) : null };
+  });
+  ok(`${w}px: the workspace tabs are not squeezed`, !m.wsClipped);
+  ok(`${w}px: the document name is readable or out of the way`, m.name === null || m.name >= 96, String(m.name));
+  await ctx.close();
+}
+
 /* -------------------------------- the tiers above and below stay intact */
 {
   const { ctx, page } = await open(1440, 900, { touch: false, ua: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36' });

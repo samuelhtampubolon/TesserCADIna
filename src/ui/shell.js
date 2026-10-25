@@ -81,7 +81,10 @@ bus.on(T.STATUS, status);
 let openModal = null;
 
 export function modal({ title, subtitle, body, actions = [], wide = false, size = '', onClose = null, icon: ic = null }) {
-  closeModal();
+  // Whatever had focus before the dialog gets it back afterwards, so a
+  // keyboard user is not dropped at the top of the page on every close.
+  const opener = openModal ? openModal.opener : document.activeElement;
+  closeModal({ restore: false });
   const back = el('div', { class: 'modal-back' });
   const box = el('div', { class: `modal${wide ? ' wide' : ''}${size ? ' ' + size : ''}`, role: 'dialog', 'aria-modal': 'true', 'aria-label': title });
   const bodyNode = el('div', { class: 'modal-body' }, [].concat(body));
@@ -110,8 +113,24 @@ export function modal({ title, subtitle, body, actions = [], wide = false, size 
   if (actions.length) box.appendChild(foot);
   back.appendChild(box);
   back.addEventListener('pointerdown', (e) => { if (e.target === back) closeModal(); });
+  // Tab stays inside the dialog while it is modal: aria-modal tells a screen
+  // reader the page behind is inert, and the focus order has to agree.
+  box.addEventListener('keydown', (e) => {
+    if (e.key !== 'Tab') return;
+    const stops = [...box.querySelectorAll('button, input, select, textarea, a[href], [tabindex]:not([tabindex="-1"])')]
+      .filter(n => !n.disabled && n.offsetParent !== null);
+    if (!stops.length) return;
+    const first = stops[0], last = stops[stops.length - 1];
+    if (e.shiftKey && document.activeElement === first) { last.focus(); e.preventDefault(); }
+    else if (!e.shiftKey && document.activeElement === last) { first.focus(); e.preventDefault(); }
+  });
   $('#modalRoot').appendChild(back);
-  openModal = { back, onClose };
+  openModal = { back, onClose, opener };
+  // A body that scrolls must be reachable from the keyboard, or text below the
+  // fold can only be read with a mouse wheel.
+  requestAnimationFrame(() => {
+    if (bodyNode.scrollHeight > bodyNode.clientHeight + 1) bodyNode.tabIndex = 0;
+  });
   // preventScroll matters: focusing an element scrolls it into view, and in a
   // dialog whose first field sits below a drawing or a long banner that
   // silently scrolls the top of the content off screen. The user should always
@@ -122,11 +141,13 @@ export function modal({ title, subtitle, body, actions = [], wide = false, size 
   return bodyNode;
 }
 
-export function closeModal() {
+export function closeModal({ restore = true } = {}) {
   if (!openModal) return;
+  const { opener } = openModal;
   openModal.onClose?.();
   openModal.back.remove();
   openModal = null;
+  if (restore && opener?.isConnected && typeof opener.focus === 'function') opener.focus({ preventScroll: true });
 }
 
 export function isModalOpen() {
