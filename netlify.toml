@@ -1,0 +1,11 @@
+# Netlify: build the deployable set and publish it.
+#
+# Security headers come from dist-site/_headers, which tools/build-site.mjs
+# writes from the same policy every other host uses. They are not repeated
+# here, so there is no second copy to fall out of date.
+[build]
+  command = "node tools/build-site.mjs"
+  publish = "dist-site"
+
+[build.environment]
+  NODE_VERSION = "22"

@@ -10,7 +10,7 @@ lebih besar. Angkanya ada di bawah.
 ![No build step](https://img.shields.io/badge/build-none-4c9fff)
 ![Bahasa Indonesia](https://img.shields.io/badge/UI-Bahasa%20Indonesia-4c9fff)
 ![202 commands](https://img.shields.io/badge/commands-202-8957e5)
-![1355 tests](https://img.shields.io/badge/tests-1355%20passing-3da639)
+![1363 tests](https://img.shields.io/badge/tests-1363%20passing-3da639)
 ![Touch ready](https://img.shields.io/badge/touch-ready-4c9fff)
 
 > **▶ Pakai sekarang, tanpa instalasi:**
@@ -99,6 +99,45 @@ python3 -m http.server 8080
 
 Lalu buka `http://localhost:8080`. `npm test` menjalankan suite headless.
 
+## Menerbitkan ke hosting lain
+
+Aplikasinya situs statis: tidak ada server, tidak ada basis data, tidak ada
+variabel lingkungan. Satu perintah menyusun apa yang perlu diterbitkan:
+
+```bash
+npm run site        # menyusun dist-site/
+```
+
+`dist-site/` hanya berisi yang dimuat peramban (`index.html`, `sw.js`, `src/`,
+`styles/`, `vendor/`, `assets/`, plus `LICENSE` dan `NOTICE`). Perkakas uji,
+cangkang desktop, dan dokumen tidak ikut terbit. Header keamanan ditulis sekali,
+dari kebijakan yang sama dengan `<meta>` di `index.html`, ditambah
+`frame-ancestors 'none'` yang hanya bisa dikirim lewat header. `npm test`
+memeriksa bahwa setiap host mengirim kebijakan yang persis sama.
+
+| Host | Berkas konfigurasi | Yang Anda lakukan sekali |
+|---|---|---|
+| **GitHub Pages** | `.github/workflows/pages.yml` | Sudah aktif. Setiap push ke `main` terbit sendiri. |
+| **Vercel** | `vercel.json` | Import repositori di vercel.com. Build command dan output directory terbaca dari berkasnya. |
+| **Netlify** | `netlify.toml` | *Add new site → Import from Git*. Header dibaca dari `dist-site/_headers`. |
+| **Cloudflare Pages** | `wrangler.toml` | *Workers & Pages → Create → Pages → Connect to Git*. Build command `node tools/build-site.mjs`, output `dist-site`. |
+| **Firebase Hosting** (Spark, gratis) | `firebase.json` | `npm i -g firebase-tools`, `firebase login`, `firebase use --add`, lalu `firebase deploy --only hosting`. |
+| **Hugging Face Spaces** | `.github/workflows/huggingface.yml` | Buat Space ber-SDK **Static**, lalu di repositori ini setel variabel `HF_SPACE` (`nama-anda/TesserCADIna`) dan secret `HF_TOKEN` (token *write*). Workflow-nya mati sampai keduanya ada. |
+
+Tiga hal yang perlu dikatakan terang-terangan:
+
+- **Glitch tidak tercantum** karena Glitch menghentikan hosting proyek pada
+  Juli 2025. Konfigurasi untuknya tidak akan bisa dijalankan.
+- **Supabase, Firestore, Cloudflare D1, R2, dan KV tidak dipasang.** Semuanya
+  layanan *backend* untuk menyimpan data di server, sedangkan jaminan inti
+  aplikasi ini adalah bahwa model Anda tidak pernah meninggalkan mesin Anda.
+  CSP-nya membatasi `connect-src` ke `'self'`, sehingga peramban menolak
+  koneksi ke layanan mana pun. Menghubungkannya berarti melonggarkan kebijakan
+  itu dan mengubah klaim privasinya. Itu keputusan produk, bukan perapian
+  konfigurasi, dan tidak diambil di sini.
+- **Cloudflare Pages tetap gratis tanpa D1/R2/KV.** Hosting statis tidak
+  membutuhkan ketiganya.
+
 ## Build desktop
 
 Dijalankan di GitHub Actions saat Anda menandai rilis `v*`, atau secara lokal:
@@ -109,7 +148,7 @@ npm install
 npm run dist
 ```
 
-Artefak: `TesserCADIna-1.2.0-windows-x64.zip` dan installer NSIS per-pengguna.
+Artefak: `TesserCADIna-1.2.1-windows-x64.zip` dan installer NSIS per-pengguna.
 Locale Chromium selain Inggris dan Indonesia dibuang, yang menghemat belasan MB.
 
 Ukuran itu diperiksa setiap build: langkah **The Windows download is the size the
@@ -143,7 +182,7 @@ repositori, bukan efek samping sebuah build.
    tidak cocok, karena nama setiap berkas diambil dari manifes, bukan dari tag.
 
    Lewat peramban, tanpa baris perintah: **Releases → Draft a new release →
-   Choose a tag →** ketik `v1.2.0` **→ Create new tag: v1.2.0 on publish →**
+   Choose a tag →** ketik `v1.2.1` **→ Create new tag: v1.2.1 on publish →**
    Target: `main` **→ Publish release**. Build berjalan sekitar tiga menit, lalu
    berkasnya menempel sendiri ke rilis itu.
 
@@ -162,8 +201,8 @@ repositori, bukan efek samping sebuah build.
 **Belum menandai, tapi butuh `.exe`-nya sekarang?** Setiap build menyimpan
 artefaknya di tab **Actions**: buka run **Desktop build** yang hijau, gulir ke
 **Artifacts**, ambil `tessercadina-windows`. Isinya sama persis dengan yang akan
-dilampirkan ke rilis (`TesserCADIna-1.2.0-setup.exe`,
-`TesserCADIna-1.2.0-windows-x64.zip`, dan `.sha256` masing-masing). Bedanya:
+dilampirkan ke rilis (`TesserCADIna-1.2.1-setup.exe`,
+`TesserCADIna-1.2.1-windows-x64.zip`, dan `.sha256` masing-masing). Bedanya:
 artefak Actions hanya bisa diunduh sambil masuk ke akun GitHub, terbungkus satu
 lapis zip tambahan, dan dihapus otomatis setelah 90 hari. Rilis tidak.
 

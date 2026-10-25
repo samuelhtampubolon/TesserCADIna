@@ -6,3 +6,11 @@ node_modules/
 dist-desktop/
 desktop/node_modules/
 test-artifacts/
+
+# Deployable site assembled by tools/build-site.mjs.
+dist-site/
+# Host CLIs keep local state here.
+.vercel/
+.netlify/
+.wrangler/
+.firebase/

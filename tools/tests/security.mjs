@@ -514,5 +514,70 @@ ok('every third-party action is pinned to a commit, not to a tag its owner can m
 // reject the tag form it is meant to reject.
 ok('and that check would reject a tag', !/^[0-9a-f]{40}$/.test('v2'));
 
+/* ------------------------------------- 10. every host serves one policy */
+
+// The site can be deployed to GitHub Pages, Vercel, Netlify, Cloudflare Pages,
+// Firebase Hosting and Hugging Face Spaces. That is six places a security
+// header could be weaker than the others, and the weakest one is the policy the
+// application actually has. So there is one source, tools/build-site.mjs, and
+// each host's configuration is checked against it rather than trusted.
+{
+  const site = await import('../build-site.mjs');
+  const html = readFileSync(join(root, 'index.html'), 'utf8');
+  const want = site.securityHeaders(html);
+
+  ok('the header policy is the page policy, plus frame-ancestors',
+    want['Content-Security-Policy'].startsWith(
+      /<meta http-equiv="Content-Security-Policy" content="([^"]+)"/.exec(html)[1])
+    && /frame-ancestors 'none'$/.test(want['Content-Security-Policy']));
+
+  const hostHeaders = (file, pick) => {
+    const cfg = JSON.parse(readFileSync(join(root, file), 'utf8'));
+    const all = pick(cfg).find(h => h.source === '/(.*)' || h.source === '**');
+    return Object.fromEntries((all?.headers || []).map(h => [h.key, h.value]));
+  };
+  for (const [file, pick] of [
+    ['vercel.json', c => c.headers],
+    ['firebase.json', c => c.hosting.headers],
+  ]) {
+    const got = hostHeaders(file, pick);
+    const wrong = Object.keys(want).filter(k => got[k] !== want[k]);
+    ok(`${file} sends exactly the policy build-site writes`, wrong.length === 0,
+      wrong.length ? `differs on ${wrong.join(', ')} - regenerate it from tools/build-site.mjs` : '');
+  }
+
+  const vercel = JSON.parse(readFileSync(join(root, 'vercel.json'), 'utf8'));
+  const firebase = JSON.parse(readFileSync(join(root, 'firebase.json'), 'utf8'));
+  const netlify = readFileSync(join(root, 'netlify.toml'), 'utf8');
+  const wrangler = readFileSync(join(root, 'wrangler.toml'), 'utf8');
+  const pages = readFileSync(join(root, '.github/workflows/pages.yml'), 'utf8');
+  ok('every host publishes dist-site, not the repository root',
+    vercel.outputDirectory === 'dist-site'
+    && firebase.hosting.public === 'dist-site'
+    && /publish\s*=\s*"dist-site"/.test(netlify)
+    && /pages_build_output_dir\s*=\s*"dist-site"/.test(wrangler)
+    && /path:\s*dist-site/.test(pages));
+
+  // The published set must contain every file the service worker caches, or
+  // the offline copy is missing a module on exactly the hosts that use it.
+  const cached = JSON.parse(/const FILES = (\[[\s\S]*?\]);/.exec(readFileSync(join(root, 'sw.js'), 'utf8'))[1]);
+  const shipped = (f) => site.SHIPPED_FILES.includes(f) || site.SHIPPED_DIRS.some(d => f.startsWith(`${d}/`));
+  const missing = cached.filter(f => !shipped(f));
+  ok('every file the service worker caches is part of the published site',
+    missing.length === 0, missing.slice(0, 5).join(', '));
+
+  // Nothing that is tooling, the desktop shell or a document leaves with it.
+  const leaks = [...site.SHIPPED_DIRS, ...site.SHIPPED_FILES]
+    .filter(p => /^(tools|desktop|docs|\.github|node_modules)(\/|$)|\.md$/.test(p));
+  ok('and nothing outside what a browser loads is published', leaks.length === 0, leaks.join(', '));
+
+  const hf = readFileSync(join(root, '.github/workflows/huggingface.yml'), 'utf8');
+  ok('the Hugging Face mirror is off unless it is configured',
+    /if:\s*\$\{\{\s*vars\.HF_SPACE != ''\s*\}\}/.test(hf));
+  ok('and its token travels in a header, never in a URL a log could print',
+    /http\.extraheader="Authorization: Bearer \$\{HF_TOKEN\}"/.test(hf)
+    && !/https:\/\/[^\s"]*\$\{?HF_TOKEN/.test(hf));
+}
+
 console.log(fails ? `\n${fails} FAILURES` : '\nALL SECURITY CHECKS PASS');
 process.exit(fails ? 1 : 0);

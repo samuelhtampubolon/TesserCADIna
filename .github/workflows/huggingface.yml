@@ -1,0 +1,55 @@
+# Mirrors the site to a Hugging Face Space (static SDK).
+#
+# Off until you turn it on. It runs only when the repository has a variable
+# HF_SPACE (for example "your-name/TesserCADIna") and a secret HF_TOKEN with
+# write access to that Space. Without them the job is skipped, not failed, so a
+# fork that never configured Hugging Face sees nothing red.
+#
+# What is pushed is dist-site/ and nothing else: the same files every other host
+# serves, plus a README.md carrying the Space's front matter. The repository's
+# own README cannot carry that front matter, because GitHub would render it.
+name: Mirror to Hugging Face Spaces
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: huggingface
+  cancel-in-progress: true
+
+jobs:
+  mirror:
+    if: ${{ vars.HF_SPACE != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Assemble the site
+        run: node tools/build-site.mjs
+      - name: Push to the Space
+        working-directory: dist-site
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_SPACE: ${{ vars.HF_SPACE }}
+        run: |
+          if [ -z "$HF_TOKEN" ]; then
+            echo "::error::HF_SPACE is set but the HF_TOKEN secret is missing."
+            exit 1
+          fi
+          git init -q -b main
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Deploy ${GITHUB_SHA::7} from ${GITHUB_REPOSITORY}"
+          # The token travels in an HTTP header, never in a URL that a log or an
+          # error message could print.
+          git -c http.extraheader="Authorization: Bearer ${HF_TOKEN}" \
+            push --force "https://huggingface.co/spaces/${HF_SPACE}" main
