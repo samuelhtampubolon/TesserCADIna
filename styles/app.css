@@ -1336,6 +1336,11 @@ kbd { font: 11px var(--mono); background: var(--bg-inset); border: 1px solid var
 @media (min-width: 1440px) and (max-width: 1679px) {
   .brand-name { display: none; }
   .menubar > button { padding: 5px 6px; }
+  /* Theme and help are in Tampilan and Bantuan right beside them. Measured
+     with the fonts a CI runner has, the name field was still 73 px here. */
+  #topActions [data-cmd="view.theme"],
+  #topActions [data-cmd="help.shortcuts"],
+  #topActions .top-sep:last-of-type { display: none; }
 }
 
 .menubar > button.menu-compact {

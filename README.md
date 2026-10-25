@@ -10,7 +10,7 @@ lebih besar. Angkanya ada di bawah.
 ![No build step](https://img.shields.io/badge/build-none-4c9fff)
 ![Bahasa Indonesia](https://img.shields.io/badge/UI-Bahasa%20Indonesia-4c9fff)
 ![202 commands](https://img.shields.io/badge/commands-202-8957e5)
-![1389 tests](https://img.shields.io/badge/tests-1389%20passing-3da639)
+![1391 tests](https://img.shields.io/badge/tests-1391%20passing-3da639)
 ![Touch ready](https://img.shields.io/badge/touch-ready-4c9fff)
 
 > **▶ Pakai sekarang, tanpa instalasi:**

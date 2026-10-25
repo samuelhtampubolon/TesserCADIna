@@ -213,7 +213,7 @@ What is fair to compare is the *properties* a reader gets:
 | Modules with no header comment | Zero, enforced |
 | Unresolved identifiers | Zero, enforced with block-scoped analysis |
 | Files executing a string as code | Zero, enforced |
-| Test checks | 968 headless in 18 suites, 404 in 11 browser suites, 17 in the desktop shell |
+| Test checks | 968 headless in 18 suites, 406 in 11 browser suites, 17 in the desktop shell |
 
 The last one is the point of the rest. A structure that cannot be checked is a
 structure that erodes, so every claim on this page is a line in
