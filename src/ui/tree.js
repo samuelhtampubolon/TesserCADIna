@@ -84,7 +84,7 @@ function renderFeatures(app, host) {
         (f.visible === false || hiddenByIsolate) ? 'hidden-body' : '',
       ].filter(Boolean).join(' '),
       draggable: 'true',
-      title: res?.error ? res.error : `${cat.label}${isConsumed ? ' — consumed by a later feature' : ''}`,
+      title: res?.error ? res.error : `${t(cat.label)}${isConsumed ? t(' — consumed by a later feature') : ''}`,
       dataset: { id: f.id },
       onclick: (e) => app.select([f.id], e.shiftKey || e.ctrlKey || e.metaKey),
       ondblclick: () => renameFeature(app, f),
@@ -113,7 +113,7 @@ function renderFeatures(app, host) {
         res && !res.error && res.instances.length > 1 ? el('span', { class: 'pill', text: `×${res.instances.length}` }) : null,
         f.inputs.length ? el('span', {
           class: 'pill', text: `↰${f.inputs.length}`,
-          title: `Consumes: ${f.inputs.map(i => store.feature(i)?.name || '?').join(', ')}`,
+          title: tfmt('Consumes: {names}', { names: f.inputs.map(i => store.feature(i)?.name || '?').join(', ') }),
         }) : null,
       ].filter(Boolean)),
       el('button', {

@@ -348,8 +348,8 @@ function paramsSection(app, scope) {
   const errs = app.build?.paramErrors || {};
 
   for (const p of doc.params) {
-    const name = el('input', { type: 'text', value: p.name, spellcheck: 'false', title: 'Parameter name' });
-    const value = el('input', { type: 'text', class: 'expr', value: String(p.value), spellcheck: 'false', title: 'Value or expression' });
+    const name = el('input', { type: 'text', value: p.name, spellcheck: 'false', title: 'Parameter name', 'aria-label': 'Parameter name' });
+    const value = el('input', { type: 'text', class: 'expr', value: String(p.value), spellcheck: 'false', title: 'Value or expression', 'aria-label': 'Value or expression' });
     if (errs[p.name]) value.classList.add('bad');
 
     const commit = () => {

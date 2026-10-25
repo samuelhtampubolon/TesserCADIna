@@ -10,7 +10,7 @@ import { bus, T } from './bus.js';
 
 export const SCHEMA = 3;
 export const APP_NAME = 'TesserCADIna';
-export const APP_VERSION = '1.2.1';
+export const APP_VERSION = '1.2.2';
 export const FILE_EXT = '.tcad';
 
 let idSeq = 0;

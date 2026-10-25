@@ -23,10 +23,21 @@ import { PROSE } from './lang-prose.js';
 const ID = { ...INTERFACE, ...PROSE };
 
 
+const has = (k) => Object.prototype.hasOwnProperty.call(ID, k);
+
+/**
+ * A label followed by its shortcut, "Save project  (Ctrl S)" or "Move   G".
+ * The two or more spaces are the convention every tooltip in the app uses to
+ * set the keystroke apart, and the keystroke is the same in both languages.
+ */
+const SHORTCUT_TAIL = /^(.*\S)(\s{2,}\S.*)$/;
+
 export function t(s) {
   if (s == null || s === '') return s;
   const key = String(s);
-  if (Object.prototype.hasOwnProperty.call(ID, key)) return ID[key];
+  if (has(key)) return ID[key];
+  const m = SHORTCUT_TAIL.exec(key);
+  if (m && has(m[1])) return ID[m[1]] + m[2];
   return key;
 }
 

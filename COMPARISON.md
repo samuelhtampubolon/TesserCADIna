@@ -18,8 +18,8 @@ properties, and trails them decisively on another. Both lists are below.
 
 | | |
 |---|---|
-| Source | 25,391 lines across 54 modules, 89.6% of it shared line-for-line with TesserCAD |
-| Tests | 952 headless in 17 suites, 394 across 11 browser suites, 17 in the real desktop shell |
+| Source | 25,436 lines across 54 modules, 89.6% of it shared line-for-line with TesserCAD |
+| Tests | 968 headless in 18 suites, 406 across 11 browser suites, 17 in the real desktop shell |
 | Runtime dependencies | 1 (three.js, vendored, unmodified, 924 KB) |
 | Build step | None |
 | `npm test`, cold | 3.7 seconds, downloads nothing |
@@ -225,6 +225,6 @@ MIT-licensed source and is credited for it.
 ---
 
 ```bash
-npm test                            # 952 checks, 17 suites, 3.7 seconds
+npm test                            # 968 checks, 18 suites, 3.7 seconds
 node tools/tests/architecture.mjs   # includes the originality check above
 ```
